@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#080c14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JPEREZCOACH">
+  <meta name="description" content="Aplicación de entrenamiento y seguimiento estilo Hevy personalizada para JPEREZCOACH. Registro en vivo, rotación de 6 días, creador de rutinas, chat con el entrenador y analítica avanzada.">
+
+  <title>JPEREZCOACH PRO · Workout Tracker</title>
+
+  <!-- Favicons y Manifest PWA -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="JPEREZCOACH PRO · Workout Tracker">
+  <meta property="og:description" content="Entrena con la metodología de Jose Perez. Rutinas de alta intensidad, registro Hevy en vivo, chat y analítica.">
+  <meta property="og:image" content="og-image.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- Estilos CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Lienzo para confeti de fin de entrenamiento -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- =========================================================================
+       CABECERA PRINCIPAL (APP HEADER)
+       ========================================================================= -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-brand">
+        <div class="brand-logo-wrap">
+          <img src="assets/logo_square.png" onerror="this.src='icon.png'" alt="JPEREZ Logo" class="brand-logo">
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">JPEREZ<span>COACH</span></h1>
+          <span class="brand-badge">PRO TRACKER</span>
+        </div>
+      </div>
+
+      <div class="header-user-actions">
+        <div class="streak-pill" id="header-streak-badge" title="Racha de entrenamientos activos">
+          🔥 5d
+        </div>
+        <button class="user-profile-btn" id="btn-header-profile" title="Perfil y cuenta">
+          <div id="header-user-avatar" class="user-avatar-wrap">
+            <img src="assets/coach_photo.png" alt="Avatar" class="avatar-img">
+          </div>
+          <span id="header-user-name" class="user-name-text">David Otero</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       CONTENIDO PRINCIPAL (VISTAS DE PESTAÑAS)
+       ========================================================================= -->
+  <main class="app-main-content">
+
+    <!-- -----------------------------------------------------------------------
+         PESTAÑA 1: ENTRENAR (WORKOUT TAB)
+         ----------------------------------------------------------------------- -->
+    <section id="tab-workout" class="view-screen active">
+      <div class="screen-container">
+        
+        <!-- Banner de inicio rápido de entreno -->
+        <div class="quick-start-hero">
+          <div class="hero-content">
+            <span class="hero-tag">ALTA INTENSIDAD · METODOLOGÍA JPEREZ</span>
+            <h2 class="hero-title">Empieza a Registrar tu Sesión</h2>
+            <p class="hero-desc">Lleva tus series a RIR 0 con excéntricas de 5s y bate tus marcas anteriores.</p>
+            <div class="hero-buttons">
+              <button class="btn btn-primary btn-large" id="btn-start-empty-workout">
+                <span class="btn-icon">⚡</span> Iniciar Entrenamiento Libre
+              </button>
+              <button class="btn btn-secondary" id="btn-hero-new-routine">
+                <span class="btn-icon">➕</span> Crear Nueva Rutina
+              </button>
+            </div>
+          </div>
+          <div class="hero-coach-badge">
+            <img src="assets/coach_photo.png" onerror="this.src='coach.png'" alt="Jose Perez Coach" class="hero-coach-img">
+            <div class="hero-coach-info">
+              <strong>Jose Perez</strong>
+              <span>Head Coach</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenedor dinámico de rutinas (Oficiales 6 Días + Personalizadas) -->
+        <div id="routines-list-container" class="routines-section-wrap">
+          <!-- Renderizado dinámicamente por App.renderWorkoutTab() -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         PESTAÑA 2: RUTINAS (ROUTINES BUILDER TAB)
+         ----------------------------------------------------------------------- -->
+    <section id="tab-routines" class="view-screen">
+      <div class="screen-container">
+        <div id="routines-tab-container">
+          <!-- Renderizado dinámicamente por App.renderRoutinesTab() -->
+        </div>
+      </div>
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         PESTAÑA 3: CHAT (CHAT CON EL COACH & COMUNIDAD TEAM)
+         ----------------------------------------------------------------------- -->
+    <section id="tab-chat" class="view-screen">
+      <div class="screen-container chat-layout-container">
+        
+        <!-- Barra superior del chat con selector de canal -->
+        <div class="chat-top-bar">
+          <div class="chat-channels-toggle">
+            <button class="chat-channel-btn active" data-channel="coach">
+              👨‍🏫 Coach Jose Perez
+            </button>
+            <button class="chat-channel-btn" data-channel="team">
+              👥 JPEREZ TEAM (Comunidad)
+            </button>
+          </div>
+
+          <div class="chat-channel-header">
+            <div>
+              <h3 id="chat-active-channel-title">Jose Perez · Head Coach</h3>
+              <p id="chat-active-channel-desc">Respuestas directas con la metodología oficial JPEREZCOACH</p>
+            </div>
+            <div class="chat-top-actions">
+              <button class="btn-wa-direct" id="btn-open-whatsapp" title="Abrir WhatsApp oficial">
+                <span>💬 WhatsApp Coach</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Píldoras de preguntas rápidas (Quick prompts) para el Coach -->
+          <div class="quick-prompts-scroller" id="coach-quick-prompts">
+            <button class="prompt-chip" data-prompt="¿Cómo caliento para la serie pesada?">🔥 ¿Cómo calentar para serie pesada?</button>
+            <button class="prompt-chip" data-prompt="¿Qué hago si me estanco en una marca?">📈 ¿Qué hago si me estanco en peso?</button>
+            <button class="prompt-chip" data-prompt="¿Cómo aplico la técnica de Rest-Pause?">⏱️ ¿Cómo aplico el Rest-Pause?</button>
+            <button class="prompt-chip" data-prompt="¿Por qué la excéntrica en 5 segundos?">⏳ ¿Por qué la excéntrica en 5 segundos?</button>
+            <button class="prompt-chip" data-prompt="¿Cómo organizo los días de descanso en los 6 rotativos?">🔄 ¿Cómo organizar los 6 días rotativos?</button>
+            <button class="prompt-chip" data-prompt="¿Cuántas proteínas necesito al día?">🥩 ¿Cuánta proteína tomar?</button>
+          </div>
+        </div>
+
+        <!-- Área de mensajes -->
+        <div class="chat-messages-scroll" id="chat-messages-container">
+          <!-- Renderizado dinámicamente por App.renderChatMessages() -->
+        </div>
+
+        <!-- Barra inferior para componer y enviar -->
+        <div class="chat-composer-bar">
+          <button class="btn-share-workout-pill" id="btn-share-last-workout-chat" title="Compartir mi último entrenamiento completado">
+            🏋️‍♂️ Compartir mi último entreno
+          </button>
+          <form id="chat-send-form" class="chat-form">
+            <input type="text" id="chat-text-input" class="chat-input" placeholder="Escribe un mensaje al entrenador o al equipo..." autocomplete="off">
+            <button type="submit" class="btn-chat-send" title="Enviar">
+              <span>➤</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         PESTAÑA 4: HISTORIAL & ANALÍTICA (HISTORY & STATS)
+         ----------------------------------------------------------------------- -->
+    <section id="tab-history" class="view-screen">
+      <div class="screen-container">
+        
+        <div class="screen-header-simple">
+          <h2>Tu Historial y Progreso</h2>
+          <p>Métricas de tonelaje levantado, consistencia y marcas personales (PRs).</p>
+        </div>
+
+        <!-- Banner de estadísticas globales agregadas -->
+        <div id="history-stats-banner" class="stats-banner-grid">
+          <!-- Renderizado dinámicamente -->
+        </div>
+
+        <!-- Heatmap de consistencia estilo GitHub/Hevy (12 semanas) -->
+        <div class="heatmap-section-card">
+          <div class="card-section-header">
+            <h4>Calendario de Consistencia (Últimas 12 Semanas)</h4>
+            <div class="heat-legend">
+              <span>Menos</span>
+              <div class="heat-cell heat-level-0"></div>
+              <div class="heat-cell heat-level-1"></div>
+              <div class="heat-cell heat-level-2"></div>
+              <div class="heat-cell heat-level-3"></div>
+              <div class="heat-cell heat-level-4"></div>
+              <span>Más</span>
+            </div>
+          </div>
+          <div id="activity-heatmap-grid" class="heatmap-grid-scroll">
+            <!-- Celdas renderizadas dinámicamente -->
+          </div>
+        </div>
+
+        <!-- Récords Personales (PR Hall of Fame) -->
+        <div class="prs-section-card">
+          <div class="card-section-header">
+            <h4>🏆 Récords Personales (Mejores Marcas)</h4>
+          </div>
+          <div id="history-prs-container">
+            <!-- Renderizado dinámicamente -->
+          </div>
+        </div>
+
+        <!-- Historial cronológico de entrenamientos -->
+        <div class="history-list-section">
+          <div class="card-section-header">
+            <h4>Entrenamientos Realizados</h4>
+          </div>
+          <div id="history-workouts-container">
+            <!-- Renderizado dinámicamente -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- -----------------------------------------------------------------------
+         PESTAÑA 5: PERFIL & HERRAMIENTAS GYM (PROFILE TAB)
+         ----------------------------------------------------------------------- -->
+    <section id="tab-profile" class="view-screen">
+      <div class="screen-container">
+
+        <!-- Tarjeta de perfil de usuario -->
+        <div class="profile-hero-card">
+          <div class="profile-hero-top">
+            <div id="profile-avatar-wrap">
+              <img src="assets/coach_photo.png" alt="Avatar" class="profile-big-avatar">
+            </div>
+            <div class="profile-hero-info">
+              <div class="profile-title-row">
+                <h3 id="profile-name">David Otero</h3>
+                <span id="profile-role" class="badge-role">Atleta Oficial</span>
+              </div>
+              <p id="profile-email" class="profile-email-text">david@jperezcoach.com</p>
+              <p id="profile-bio" class="profile-bio-text">Atleta enfocado en hipertrofia y alta intensidad.</p>
+            </div>
+          </div>
+
+          <div class="profile-stats-chips">
+            <div class="profile-chip">
+              <span class="chip-label">Peso Corporal</span>
+              <strong id="profile-weight">84.5 kg</strong>
+            </div>
+            <div class="profile-chip">
+              <span class="chip-label">Estatura</span>
+              <strong id="profile-height">181 cm</strong>
+            </div>
+            <div class="profile-chip">
+              <span class="chip-label">Objetivo</span>
+              <strong id="profile-goal">Hipertrofia</strong>
+            </div>
+          </div>
+
+          <div class="profile-actions-row">
+            <button class="btn btn-secondary btn-sm" id="btn-open-auth-modal">
+              👥 Cambiar de Cuenta / Iniciar Sesión
+            </button>
+            <button class="btn btn-outline-sm" id="btn-edit-profile-modal">
+              ✏️ Editar Perfil
+            </button>
+          </div>
+        </div>
+
+        <!-- HERRAMIENTA 1: CALCULADORA DE DISCOS DE BARRA (PLATE CALCULATOR) -->
+        <div class="gym-tool-card" id="tool-plate-calculator">
+          <div class="tool-card-header">
+            <div class="tool-icon">🏋️‍♂️</div>
+            <div>
+              <h4>Calculadora de Discos de Barra (Plate Calculator)</h4>
+              <p>Visualiza exactamente qué discos cargar por cada lado de la barra olímpica.</p>
+            </div>
+          </div>
+
+          <div class="tool-inputs-grid">
+            <div class="form-group">
+              <label for="plate-calc-target">Peso Total a Cargar (kg):</label>
+              <input type="number" step="0.5" id="plate-calc-target" class="form-control" value="100" min="20">
+            </div>
+            <div class="form-group">
+              <label for="plate-calc-bar">Peso de la Barra:</label>
+              <select id="plate-calc-bar" class="form-control">
+                <option value="20" selected>Barra Olímpica Estándar (20 kg)</option>
+                <option value="15">Barra Femenina / Corta (15 kg)</option>
+                <option value="10">Barra Técnica (10 kg)</option>
+                <option value="0">Sin barra (Máquina multipower)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Barra gráfica interactiva con discos -->
+          <div id="plate-calc-visual-barbell" class="visual-barbell-container">
+            <!-- Renderizado dinámicamente -->
+          </div>
+
+          <div id="plate-calc-breakdown" class="plate-breakdown-box">
+            <!-- Resumen numérico -->
+          </div>
+        </div>
+
+        <!-- HERRAMIENTA 2: CALCULADORA DE 1RM (ONE REP MAX) -->
+        <div class="gym-tool-card" id="tool-1rm-calculator">
+          <div class="tool-card-header">
+            <div class="tool-icon">⚡</div>
+            <div>
+              <h4>Calculadora de 1RM (Fuerza Máxima)</h4>
+              <p>Fórmulas de Epley y Brzycki con tabla de porcentajes para programar cargas.</p>
+            </div>
+          </div>
+
+          <div class="tool-inputs-grid">
+            <div class="form-group">
+              <label for="calc-1rm-weight">Peso Levantado (kg):</label>
+              <input type="number" step="0.5" id="calc-1rm-weight" class="form-control" value="100" min="1">
+            </div>
+            <div class="form-group">
+              <label for="calc-1rm-reps">Repeticiones Realizadas:</label>
+              <input type="number" step="1" id="calc-1rm-reps" class="form-control" value="6" min="1" max="30">
+            </div>
+          </div>
+
+          <div id="calc-1rm-results" class="one-rm-summary-box">
+            <!-- Resumen 1RM -->
+          </div>
+
+          <div id="calc-1rm-table-wrap">
+            <!-- Tabla de porcentajes -->
+          </div>
+        </div>
+
+        <!-- HERRAMIENTA 3: COPIA DE SEGURIDAD Y SINCRONIZACIÓN -->
+        <div class="gym-tool-card">
+          <div class="tool-card-header">
+            <div class="tool-icon">💾</div>
+            <div>
+              <h4>Copia de Seguridad y Exportación</h4>
+              <p>Descarga tus entrenamientos, marcas y rutinas en JSON o restaura un backup.</p>
+            </div>
+          </div>
+          <div class="backup-buttons-row">
+            <button class="btn btn-secondary" id="btn-export-data">
+              📥 Exportar Mis Datos (JSON)
+            </button>
+            <label class="btn btn-outline" style="cursor: pointer;">
+              📤 Restaurar Backup
+              <input type="file" id="file-import-data" accept=".json" style="display: none;">
+            </label>
+          </div>
+        </div>
+
+        <!-- Contacto Oficial Jose Perez Coach -->
+        <div class="coach-contact-card">
+          <div class="contact-header">
+            <img src="assets/coach_photo.png" onerror="this.src='coach.png'" alt="Jose Perez" class="contact-coach-img">
+            <div>
+              <h4>Jose Perez · JPEREZCOACH</h4>
+              <p>Preparación personalizada de atletas de fuerza e hipertrofia.</p>
+            </div>
+          </div>
+          <div class="contact-items-list">
+            <a href="https://wa.me/34658507136" target="_blank" rel="noopener" class="contact-link">
+              📱 <strong>WhatsApp:</strong> +34 658 50 71 36
+            </a>
+            <a href="mailto:jperez@mail.com" class="contact-link">
+              ✉️ <strong>Email:</strong> jperez@mail.com
+            </a>
+            <a href="https://jperezcoach.com" target="_blank" rel="noopener" class="contact-link">
+              🌐 <strong>Web:</strong> jperezcoach.com
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       BARRA FLOTANTE DE ENTRENO ACTIVO MINIMIZADO (HEVY FLOATING BAR)
+       ========================================================================= -->
+  <div id="sticky-active-bar" class="sticky-workout-bar" title="Pulsa para volver al entrenamiento en curso">
+    <div class="sticky-bar-left">
+      <div class="pulse-indicator"></div>
+      <div>
+        <h5 class="sticky-workout-title">Entrenamiento en Curso</h5>
+        <span class="sticky-workout-sets">0/0 series</span>
+      </div>
+    </div>
+    <div class="sticky-bar-right">
+      <span class="sticky-workout-timer">00:00</span>
+      <button class="btn btn-primary btn-sm">Continuar ▶</button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       BARRA DE NAVEGACIÓN INFERIOR (BOTTOM NAV BAR HEVY STYLE)
+       ========================================================================= -->
+  <nav class="app-bottom-nav">
+    <button class="nav-tab-btn active" data-tab="tab-workout">
+      <span class="nav-icon">🏋️‍♂️</span>
+      <span class="nav-label">Entrenar</span>
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-routines">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Rutinas</span>
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-chat">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Chat</span>
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-history">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Historial</span>
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-profile">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+
+  <!-- =========================================================================
+       MODAL 1: ENTRENAMIENTO EN VIVO A PANTALLA COMPLETA (ACTIVE WORKOUT)
+       ========================================================================= -->
+  <div id="modal-active-workout" class="fullscreen-modal">
+    <div class="fullscreen-modal-header">
+      <button class="btn-icon-round" id="btn-minimize-active-workout" title="Minimizar">
+        ▼
+      </button>
+      <div class="active-header-center">
+        <input type="text" id="active-workout-title-input" class="active-title-input" value="1 PULL · Espalda y Bíceps">
+        <div class="active-header-meta">
+          <span class="live-timer-text">00:00</span>
+          <span class="meta-sep">·</span>
+          <span id="active-workout-volume">0 kg</span>
+        </div>
+      </div>
+      <div class="active-header-actions">
+        <button class="btn btn-danger-subtle btn-sm" id="btn-discard-workout">Descartar</button>
+        <button class="btn btn-primary btn-sm" id="btn-finish-workout">Finalizar ✓</button>
+      </div>
+    </div>
+
+    <div class="fullscreen-modal-body">
+      <!-- Lista de ejercicios en vivo -->
+      <div id="active-workout-exercises-container" class="active-exercises-wrapper">
+        <!-- Renderizado dinámicamente -->
+      </div>
+
+      <!-- Botón para añadir más ejercicios -->
+      <div class="active-workout-bottom-actions">
+        <button class="btn btn-outline btn-block" id="btn-add-exercise-to-active">
+          ➕ Añadir Ejercicio
+        </button>
+      </div>
+    </div>
+
+    <!-- TEMPORIZADOR DE DESCANSO FLOTANTE DENTRO DEL ENTRENO ACTIVO -->
+    <div id="floating-rest-timer" class="rest-timer-widget">
+      <div class="rest-timer-circle-wrap">
+        <svg class="rest-timer-svg" width="90" height="90" viewBox="0 0 90 90">
+          <circle class="rest-bg-circle" cx="45" cy="45" r="40"></circle>
+          <circle class="rest-progress-circle" cx="45" cy="45" r="40"></circle>
+        </svg>
+        <div class="rest-timer-content">
+          <span class="rest-timer-label">DESCANSO</span>
+          <span class="rest-timer-time">01:30</span>
+        </div>
+      </div>
+      <div class="rest-timer-controls">
+        <button class="btn-rest-adjust" id="btn-rest-minus-15">-15s</button>
+        <button class="btn-rest-adjust" id="btn-rest-plus-30">+30s</button>
+        <button class="btn-rest-skip" id="btn-rest-skip">Saltar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 2: SELECTOR DE EJERCICIOS (EXERCISE PICKER)
+       ========================================================================= -->
+  <div id="modal-exercise-picker" class="modal-dialog-overlay">
+    <div class="modal-dialog-content">
+      <div class="modal-dialog-header">
+        <h3>Seleccionar Ejercicio</h3>
+        <button class="btn-close-modal" id="btn-close-picker">✕</button>
+      </div>
+      <div class="picker-search-bar">
+        <input type="text" id="picker-search-input" class="form-control" placeholder="🔍 Buscar por nombre de ejercicio o músculo...">
+      </div>
+      <!-- Chips de filtro por grupo muscular -->
+      <div class="picker-filter-chips" id="picker-muscle-chips">
+        <button class="chip active" data-group="todos">Todos</button>
+        <button class="chip" data-group="pecho">Pecho</button>
+        <button class="chip" data-group="espalda">Espalda</button>
+        <button class="chip" data-group="pierna">Pierna</button>
+        <button class="chip" data-group="hombro">Hombro</button>
+        <button class="chip" data-group="bíceps">Bíceps</button>
+        <button class="chip" data-group="tríceps">Tríceps</button>
+        <button class="chip" data-group="abdomen">Abdomen</button>
+      </div>
+      <div class="picker-list-scroll" id="picker-exercises-list">
+        <!-- Renderizado dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 3: CREADOR Y EDITOR DE RUTINAS (ROUTINE BUILDER)
+       ========================================================================= -->
+  <div id="modal-routine-builder" class="fullscreen-modal">
+    <div class="fullscreen-modal-header">
+      <button class="btn-icon-round" id="btn-close-builder">✕</button>
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Constructor de Rutina</h3>
+      <button class="btn btn-primary btn-sm" id="btn-save-routine-draft">Guardar Rutina</button>
+    </div>
+    <div class="fullscreen-modal-body">
+      <div class="builder-meta-section">
+        <div class="form-group">
+          <label>Nombre de la Rutina:</label>
+          <input type="text" id="builder-routine-title" class="form-control" placeholder="Ej: Mi Rutina Torso Pesado">
+        </div>
+        <div class="form-group">
+          <label>Categoría / Foco:</label>
+          <select id="builder-routine-category" class="form-control">
+            <option value="Mis Rutinas">Mis Rutinas</option>
+            <option value="Empuje (Push)">Empuje (Push)</option>
+            <option value="Tirón (Pull)">Tirón (Pull)</option>
+            <option value="Pierna (Legs)">Pierna (Legs)</option>
+            <option value="Torso / Pierna">Torso / Pierna</option>
+            <option value="Brazos">Brazos</option>
+            <option value="Full Body">Full Body</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripción / Directrices del Entrenador:</label>
+          <input type="text" id="builder-routine-desc" class="form-control" placeholder="Ej: Enfoque en tensión mecánica y RIR 0">
+        </div>
+      </div>
+
+      <div class="section-title-wrap">
+        <h4>Ejercicios de la Rutina</h4>
+        <button class="btn btn-primary btn-sm" id="btn-builder-add-exercise">+ Añadir Ejercicio</button>
+      </div>
+
+      <div id="builder-exercises-list" class="builder-exercises-wrap">
+        <!-- Renderizado dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 4: VISTA PREVIA DE RUTINA
+       ========================================================================= -->
+  <div id="modal-routine-preview" class="modal-dialog-overlay">
+    <div class="modal-dialog-content">
+      <div class="modal-dialog-header">
+        <h3 id="preview-routine-title">1 PULL · Espalda y Bíceps</h3>
+        <button class="btn-close-modal" id="btn-close-preview">✕</button>
+      </div>
+      <p id="preview-routine-desc" class="preview-desc-text"></p>
+      <div class="preview-exercises-scroll" id="preview-routine-exercises">
+        <!-- Renderizado dinámicamente -->
+      </div>
+      <div class="modal-dialog-footer">
+        <button class="btn btn-primary btn-block btn-large" id="btn-preview-start-routine">
+          ▶ Iniciar Este Entrenamiento Ahora
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 5: REPRODUCTOR DE VÍDEOS DE TÉCNICA
+       ========================================================================= -->
+  <div id="modal-video-player" class="modal-dialog-overlay">
+    <div class="modal-dialog-content video-dialog-content">
+      <div class="modal-dialog-header">
+        <div>
+          <h3 id="video-modal-title">Dominadas/jalón</h3>
+          <span id="video-modal-group" class="badge-role">Espalda</span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-video">✕</button>
+      </div>
+      <div id="video-frame-container" class="video-frame-wrap">
+        <!-- Iframe de YouTube responsive -->
+      </div>
+      <div class="video-instructions-box">
+        <h5>Directrices de Ejecución Oficial Jose Perez:</h5>
+        <div id="video-tips-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 6: RESUMEN Y CELEBRACIÓN DE FIN DE ENTRENAMIENTO
+       ========================================================================= -->
+  <div id="modal-workout-summary" class="modal-dialog-overlay">
+    <div class="modal-dialog-content summary-dialog-content">
+      <div class="summary-celebration-header">
+        <div class="celebration-badge">🎉</div>
+        <h2>¡Entrenamiento Completado!</h2>
+        <h4 id="summary-workout-name">1 PULL · Espalda y Bíceps</h4>
+      </div>
+
+      <div class="summary-metrics-grid">
+        <div class="summary-metric-card">
+          <span class="metric-icon">⏱️</span>
+          <span class="metric-val" id="summary-duration">00:45:00</span>
+          <span class="metric-lbl">Duración</span>
+        </div>
+        <div class="summary-metric-card">
+          <span class="metric-icon">⚖️</span>
+          <span class="metric-val" id="summary-volume">9,480 kg</span>
+          <span class="metric-lbl">Volumen Total</span>
+        </div>
+        <div class="summary-metric-card">
+          <span class="metric-icon">🔢</span>
+          <span class="metric-val" id="summary-sets">16</span>
+          <span class="metric-lbl">Series Hechas</span>
+        </div>
+      </div>
+
+      <div id="summary-prs-container">
+        <!-- Tarjeta destacada de nuevos PRs -->
+      </div>
+
+      <div class="summary-actions-wrap">
+        <button class="btn btn-primary btn-block btn-large" id="btn-summary-share-chat">
+          💬 Compartir en el Chat del Equipo
+        </button>
+        <button class="btn btn-wa-direct btn-block" id="btn-summary-share-wa">
+          📱 Enviar a Jose Perez por WhatsApp
+        </button>
+        <button class="btn btn-outline btn-block" id="btn-close-summary">
+          Cerrar y Ver Historial
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 7: AUTENTICACIÓN / CAMBIO DE CUENTA (LOGIN & DEMO SWITCH)
+       ========================================================================= -->
+  <div id="modal-auth" class="modal-dialog-overlay">
+    <div class="modal-dialog-content auth-dialog-content">
+      <div class="modal-dialog-header">
+        <h3>Iniciar Sesión / Cambiar Cuenta</h3>
+        <button class="btn-close-modal" id="btn-close-auth">✕</button>
+      </div>
+
+      <!-- Cuentas rápidas de demostración de 1 toque -->
+      <div class="demo-accounts-section">
+        <span class="demo-section-label">⚡ Acceso Rápido a Cuentas:</span>
+        <div class="demo-users-grid">
+          <button class="demo-user-card active" data-user-id="david">
+            <img src="assets/coach_photo.png" alt="David">
+            <div>
+              <strong>David Otero</strong>
+              <span>Atleta Oficial JPEREZ</span>
+            </div>
+          </button>
+          <button class="demo-user-card" data-user-id="jperez">
+            <img src="assets/coach_photo.png" alt="Jose Perez">
+            <div>
+              <strong>Jose Perez</strong>
+              <span>Head Coach / Admin</span>
+            </div>
+          </button>
+          <button class="demo-user-card" data-user-id="invitado">
+            <div class="avatar-placeholder">?</div>
+            <div>
+              <strong>Nuevo Atleta</strong>
+              <span>Modo Invitado</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Formulario para registrar nuevo atleta -->
+      <form id="auth-register-form" class="auth-form">
+        <h4>Registrar Nuevo Atleta</h4>
+        <div class="form-group">
+          <label>Nombre Completo:</label>
+          <input type="text" id="reg-name" class="form-control" placeholder="Ej: Marcos Ramos" required>
+        </div>
+        <div class="form-group">
+          <label>Correo Electrónico:</label>
+          <input type="email" id="reg-email" class="form-control" placeholder="tu@email.com">
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Peso (kg):</label>
+            <input type="number" step="0.5" id="reg-weight" class="form-control" placeholder="80">
+          </div>
+          <div class="form-group">
+            <label>Estatura (cm):</label>
+            <input type="number" step="1" id="reg-height" class="form-control" placeholder="180">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Crear Cuenta y Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICACIONES -->
+  <div id="app-toast" class="app-toast"></div>
+
+  <!-- =========================================================================
+       SCRIPTS DE LA APLICACIÓN
+       ========================================================================= -->
+  <script src="js/state.js"></script>
+  <script src="js/db-ejercicios.js"></script>
+  <script src="js/rutinas-oficiales.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/workout-engine.js"></script>
+  <script src="js/routine-builder.js"></script>
+  <script src="js/chat-engine.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Script de enlaces y enlaces de modales adicionales -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Apertura de modales
+      var btnStartEmpty = document.getElementById('btn-start-empty-workout');
+      if (btnStartEmpty) {
+        btnStartEmpty.addEventListener('click', function() {
+          WorkoutEngine.startEmptyWorkout();
+        });
+      }
+
+      var btnHeroNewRoutine = document.getElementById('btn-hero-new-routine');
+      if (btnHeroNewRoutine) {
+        btnHeroNewRoutine.addEventListener('click', function() {
+          App.openRoutineBuilder(null);
+        });
+      }
+
+      var btnMinimize = document.getElementById('btn-minimize-active-workout');
+      if (btnMinimize) {
+        btnMinimize.addEventListener('click', function() {
+          App.hideActiveWorkoutModal();
+          App.updateStickyWorkoutBar();
+        });
+      }
+
+      var btnFinish = document.getElementById('btn-finish-workout');
+      if (btnFinish) {
+        btnFinish.addEventListener('click', function() {
+          if (confirm('¿Deseas finalizar y guardar este entrenamiento?')) {
+            WorkoutEngine.finishWorkout();
+          }
+        });
+      }
+
+      var btnDiscard = document.getElementById('btn-discard-workout');
+      if (btnDiscard) {
+        btnDiscard.addEventListener('click', function() {
+          if (confirm('¿Estás seguro de descartar este entrenamiento? Las series registradas no se guardarán.')) {
+            WorkoutEngine.discardWorkout();
+          }
+        });
+      }
+
+      var btnAddExActive = document.getElementById('btn-add-exercise-to-active');
+      if (btnAddExActive) {
+        btnAddExActive.addEventListener('click', function() {
+          App.openExercisePicker(function(exerciseId) {
+            WorkoutEngine.addExerciseToWorkout(exerciseId);
+          });
+        });
+      }
+
+      var btnClosePicker = document.getElementById('btn-close-picker');
+      if (btnClosePicker) {
+        btnClosePicker.addEventListener('click', function() {
+          App.closeExercisePicker();
+        });
+      }
+
+      var searchInput = document.getElementById('picker-search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          App.renderExercisePickerList();
+        });
+      }
+
+      var muscleChips = document.querySelectorAll('#picker-muscle-chips .chip');
+      muscleChips.forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          muscleChips.forEach(function(c) { c.classList.remove('active'); });
+          this.classList.add('active');
+          App.selectedFilterGroup = this.getAttribute('data-group');
+          App.renderExercisePickerList();
+        });
+      });
+
+      // Modales de rutinas
+      var btnCloseBuilder = document.getElementById('btn-close-builder');
+      if (btnCloseBuilder) {
+        btnCloseBuilder.addEventListener('click', function() {
+          if (confirm('¿Cerrar constructor de rutina?')) {
+            App.closeRoutineBuilder();
+          }
+        });
+      }
+
+      var btnSaveDraft = document.getElementById('btn-save-routine-draft');
+      if (btnSaveDraft) {
+        btnSaveDraft.addEventListener('click', function() {
+          var titleIn = document.getElementById('builder-routine-title');
+          var descIn = document.getElementById('builder-routine-desc');
+          var catIn = document.getElementById('builder-routine-category');
+
+          if (RoutineBuilder.currentDraft) {
+            if (titleIn) RoutineBuilder.currentDraft.titulo = titleIn.value;
+            if (descIn) RoutineBuilder.currentDraft.descripcion = descIn.value;
+            if (catIn) RoutineBuilder.currentDraft.categoria = catIn.value;
+          }
+
+          var res = RoutineBuilder.saveCurrentDraft();
+          if (res.success) {
+            App.closeRoutineBuilder();
+            App.showToast('¡Rutina guardada correctamente!');
+            App.renderWorkoutTab();
+            App.renderRoutinesTab();
+          } else {
+            alert(res.message);
+          }
+        });
+      }
+
+      var btnClosePreview = document.getElementById('btn-close-preview');
+      if (btnClosePreview) {
+        btnClosePreview.addEventListener('click', function() {
+          document.getElementById('modal-routine-preview').classList.remove('open');
+        });
+      }
+
+      var btnCloseVideo = document.getElementById('btn-close-video');
+      if (btnCloseVideo) {
+        btnCloseVideo.addEventListener('click', function() {
+          App.closeVideoModal();
+        });
+      }
+
+      var btnCloseSummary = document.getElementById('btn-close-summary');
+      if (btnCloseSummary) {
+        btnCloseSummary.addEventListener('click', function() {
+          document.getElementById('modal-workout-summary').classList.remove('open');
+          App.switchTab('tab-history');
+        });
+      }
+
+      // Temporizador de descanso controles
+      var btnRestPlus30 = document.getElementById('btn-rest-plus-30');
+      if (btnRestPlus30) {
+        btnRestPlus30.addEventListener('click', function() {
+          WorkoutEngine.addRestTime(30);
+        });
+      }
+
+      var btnRestMinus15 = document.getElementById('btn-rest-minus-15');
+      if (btnRestMinus15) {
+        btnRestMinus15.addEventListener('click', function() {
+          WorkoutEngine.addRestTime(-15);
+        });
+      }
+
+      var btnRestSkip = document.getElementById('btn-rest-skip');
+      if (btnRestSkip) {
+        btnRestSkip.addEventListener('click', function() {
+          WorkoutEngine.skipRestTimer();
+        });
+      }
+
+      // Chat handlers
+      var chatChannelBtns = document.querySelectorAll('.chat-channel-btn');
+      chatChannelBtns.forEach(function(b) {
+        b.addEventListener('click', function() {
+          var ch = this.getAttribute('data-channel');
+          ChatEngine.setChannel(ch);
+          App.renderChatTab();
+        });
+      });
+
+      var chatForm = document.getElementById('chat-send-form');
+      var chatInput = document.getElementById('chat-text-input');
+      if (chatForm && chatInput) {
+        chatForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          var txt = chatInput.value;
+          if (txt && txt.trim()) {
+            ChatEngine.sendMessage(txt);
+            chatInput.value = '';
+          }
+        });
+      }
+
+      var btnShareChat = document.getElementById('btn-share-last-workout-chat');
+      if (btnShareChat) {
+        btnShareChat.addEventListener('click', function() {
+          ChatEngine.shareLastWorkout(ChatEngine.currentChannel);
+        });
+      }
+
+      var btnWa = document.getElementById('btn-open-whatsapp');
+      if (btnWa) {
+        btnWa.addEventListener('click', function() {
+          var url = ChatEngine.getWhatsAppUrl();
+          window.open(url, '_blank');
+        });
+      }
+
+      // Quick prompt chips
+      document.querySelectorAll('.prompt-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          var prompt = this.getAttribute('data-prompt');
+          ChatEngine.sendMessage(prompt, 'coach');
+          ChatEngine.setChannel('coach');
+          App.renderChatTab();
+        });
+      });
+
+      // Herramientas Gym handlers
+      var plateTarget = document.getElementById('plate-calc-target');
+      var plateBar = document.getElementById('plate-calc-bar');
+      function updatePlates() {
+        if (plateTarget && plateBar) {
+          App.calculateAndRenderPlates(plateTarget.value, plateBar.value);
+        }
+      }
+      if (plateTarget) plateTarget.addEventListener('input', updatePlates);
+      if (plateBar) plateBar.addEventListener('change', updatePlates);
+      updatePlates();
+
+      var calc1rmWeight = document.getElementById('calc-1rm-weight');
+      var calc1rmReps = document.getElementById('calc-1rm-reps');
+      function update1RM() {
+        if (calc1rmWeight && calc1rmReps) {
+          App.calculateAndRender1RM(calc1rmWeight.value, calc1rmReps.value);
+        }
+      }
+      if (calc1rmWeight) calc1rmWeight.addEventListener('input', update1RM);
+      if (calc1rmReps) calc1rmReps.addEventListener('input', update1RM);
+      update1RM();
+
+      // Exportar / Importar
+      var btnExport = document.getElementById('btn-export-data');
+      if (btnExport) {
+        btnExport.addEventListener('click', function() {
+          var json = AppState.exportAllData();
+          var blob = new Blob([json], { type: 'application/json' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'jperezcoach_backup_' + new Date().toISOString().split('T')[0] + '.json';
+          a.click();
+          URL.revokeObjectURL(url);
+          App.showToast('Copia de seguridad descargada.');
+        });
+      }
+
+      var fileImport = document.getElementById('file-import-data');
+      if (fileImport) {
+        fileImport.addEventListener('change', function(e) {
+          var file = e.target.files[0];
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function(evt) {
+            var ok = AppState.importAllData(evt.target.result);
+            if (!ok) alert('El archivo no tiene un formato válido.');
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      // Auth modal
+      var btnHeaderProfile = document.getElementById('btn-header-profile');
+      var btnOpenAuth = document.getElementById('btn-open-auth-modal');
+      var modalAuth = document.getElementById('modal-auth');
+      var btnCloseAuth = document.getElementById('btn-close-auth');
+
+      function openAuth() { if (modalAuth) modalAuth.classList.add('open'); }
+      function closeAuth() { if (modalAuth) modalAuth.classList.remove('open'); }
+
+      if (btnHeaderProfile) btnHeaderProfile.addEventListener('click', openAuth);
+      if (btnOpenAuth) btnOpenAuth.addEventListener('click', openAuth);
+      if (btnCloseAuth) btnCloseAuth.addEventListener('click', closeAuth);
+
+      // Demo accounts fast switch
+      document.querySelectorAll('.demo-user-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var uId = this.getAttribute('data-user-id');
+          AuthService.switchAccount(uId);
+          document.querySelectorAll('.demo-user-card').forEach(function(c) { c.classList.remove('active'); });
+          this.classList.add('active');
+          closeAuth();
+          App.showToast('Sesión cambiada a: ' + (AppState.currentUser ? AppState.currentUser.name : ''));
+        });
+      });
+
+      var registerForm = document.getElementById('auth-register-form');
+      if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          var name = document.getElementById('reg-name').value;
+          var email = document.getElementById('reg-email').value;
+          var weight = document.getElementById('reg-weight').value;
+          var height = document.getElementById('reg-height').value;
+
+          var res = AuthService.register({ name: name, email: email, weight: weight, height: height });
+          if (res.success) {
+            closeAuth();
+            App.showToast('¡Bienvenido, ' + res.user.name + '!');
+          } else {
+            alert(res.message);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
