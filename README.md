@@ -1,117 +1,127 @@
-# JPEREZCOACH PRO · Workout Tracker (Hevy Style)
-### Aplicación de Entrenamiento de Alta Intensidad y Registro Serie a Serie · Jose Perez Coach
+# JPEREZCOACH PRO · Workout Tracker (Hevy Style V3)
+### Aplicación de Alta Intensidad · Subida de Rutinas en PDF · Creador y Exportador Dinámico
 **Repositorio Oficial:** [Abraveses-de-tera/JPEREZCOACHAPP](https://github.com/Abraveses-de-tera/JPEREZCOACHAPP)  
 **Enlace Web Directo (GitHub Pages):** [https://abraveses-de-tera.github.io/JPEREZCOACHAPP/](https://abraveses-de-tera.github.io/JPEREZCOACHAPP/)
 
 ---
 
-## ⚡ Descripción General
+## ⚡ Novedades Principales de esta Versión
 
-**JPEREZCOACH PRO** es una Progressive Web App (**PWA**) de última generación inspirada en la mejor experiencia de usuario de **Hevy** y adaptada al 100% a la metodología, identidad y directrices técnicas de **Jose Perez (JPEREZCOACH)**.
+1. **📄 Subida e Importación Inteligente de Rutinas en PDF**:
+   - Sube cualquier rutina en archivo `.pdf` (arrastrar y soltar) o pega el texto directamente.
+   - El motor analiza y detecta automáticamente días, ejercicios, series, repeticiones y observaciones.
+   - Vinculación automática de ejercicios con la base de datos oficial y vídeos de técnica.
+   - Pantalla de previsualización antes de guardar en tu biblioteca.
 
-Permite registrar entrenamientos serie a serie en tiempo real, construir y personalizar cualquier rutina desde cero, chatear directamente con el entrenador o en la comunidad de atletas, calcular cargas con la barra visual olímpica y batir récords personales (PRs) con feedback háptico y sonoro nativo.
+2. **📖 Guía de Formato PDF Integrada**:
+   - Sección interactiva en la app que explica exactamente cómo debe estructurarse el PDF para que el analizador lo entienda al 100%.
+   - Ejemplo modelo con botón para copiarlo o usarlo directamente como plantilla.
 
----
+3. **🗑️ Rutinas 100% Dinámicas (Borrar, Guardar y Restaurar)**:
+   - La rutina inicial predeterminada (6 Días de Jose Perez para David Otero) ya no es fija: **puedes borrarla** si eres otro atleta y quieres tu propia rutina.
+   - Puedes guardar tantas rutinas como desees en tu biblioteca personal.
+   - Botón **"🔄 Restaurar 6 Días Oficiales"** para recuperar el plan de Jose Perez en cualquier momento.
 
-## 🚀 Características Principales (Estilo Hevy)
-
-### 🏋️‍♂️ 1. Registro de Entrenamiento en Vivo (Active Workout Engine)
-- **Inicio Flexible**: Comienza un entrenamiento libre vacío (*Empty Workout*) o selecciona cualquiera de las rutinas oficiales y personalizadas con 1 solo toque.
-- **Cronómetro Flotante y Minimizable**: Si sales de la pantalla de entreno para consultar el chat o tu historial, una barra flotante inferior mantiene el contador en tiempo real y el acceso inmediato.
-- **Tabla de Series Inteligente**:
-  - Selector de tipo de serie táctil: **Normal (1, 2...)**, **Calentamiento (W)**, **Drop Set (D)** y **Fallo / RIR 0 (F)**.
-  - **Valores Anteriores (*Ghost Values*)**: Muestra la carga y repeticiones de tu sesión anterior (`ej: 80 kg × 6`) para ayudarte a aplicar sobrecarga progresiva.
-  - **Checkmark Neón**: Al completar una serie, se ilumina en verde esmeralda, emite un agradable acorde sintético (*Web Audio API*) y vibra el teléfono.
-- **Temporizador de Descanso Automático**: Al marcar una serie, arranca la cuenta atrás con rueda circular de progreso, botones de ajuste rápido (`+30s` / `-15s`), aviso sonoro al llegar a `00:00` y vibración en el bolsillo.
-- **Celebración de Fin de Sesión**: Animación de confeti en pantalla, cálculo automático del tonelaje levantado (kg/toneladas), duración y desglose de récords personales superados.
-
----
-
-### 📋 2. Creador y Editor de Rutinas Personalizadas (*"Haz tu Rutina"*)
-- **Constructor Completo**:
-  - Crea rutinas desde cero con título, categoría (Empuje, Tirón, Pierna, Torso, Brazos, Full Body), descripción y notas.
-  - Añade cualquier ejercicio del catálogo maestro de más de 100 ejercicios o crea ejercicios propios.
-  - Configura repeticiones objetivo, número de series por defecto y directrices técnicas (ej: *excéntrica en 5 segundos*, *tempo 1-3-1*).
-  - Reordena los ejercicios arriba/abajo con un toque.
-  - Duplica cualquier rutina (oficial o personalizada) para adaptarla como nueva plantilla.
-  - Exportación e importación directa de rutinas en formato JSON.
+4. **📤 Exportación de Nuevas Rutinas (3 Formatos)**:
+   - **📄 Ficha PDF Imprimible**: Genera una hoja de entrenamiento profesional lista para imprimir o guardar como PDF en el teléfono.
+   - **📱 Mensaje Formateado para WhatsApp**: Texto con emojis, series y notas listo para enviar a tu entrenador o atleta en un toque.
+   - **💾 Archivo JSON**: Backup completo de la rutina para transferirla entre dispositivos.
 
 ---
 
-### 💬 3. Chat Interactivo Doble Canal
-- **Canal 1: Jose Perez (Head Coach)**:
-  - Asistente conversacional inteligente entrenado en la metodología oficial de Jose Perez: alta intensidad, RIR 0, bajadas en 5s, rest-pause, progresiones, macros y descansos.
-  - Píldoras de preguntas frecuentes con 1 toque.
-  - **Botón Directo de WhatsApp**: Enlace preformateado directo al WhatsApp oficial de Jose Perez (`+34 658 50 71 36`).
-  - **Compartir Entrenamiento**: Envía la ficha resumen de tu último entreno directamente a la conversación.
-- **Canal 2: Comunidad JPEREZ TEAM**:
-  - Feed social donde los atletas comparten sus entrenamientos finalizados y nuevos récords.
-  - Reacciones interactivas con emojis (🔥, 💪, 🦁, ⚡).
+## 📖 Cómo debe estructurarse el PDF para que la App lo entienda al 100%
+
+El importador inteligente de **JPEREZCOACH PRO** procesa el texto estructurado del documento. Para una detección perfecta:
+
+### 1. Encabezado del Plan
+Incluye al inicio el nombre del plan y el atleta:
+```text
+PLAN DE ENTRENAMIENTO · JPEREZCOACH
+Atleta: Marcos Ramos | Objetivo: Hipertrofia
+```
+
+### 2. Separación Clara de Días
+Cada día debe comenzar con la palabra `DÍA`, `DIA` o `DAY` seguida del número y el grupo muscular:
+```text
+DÍA 1: PULL (Espalda y Bíceps)
+DÍA 2: PUSH (Pecho y Hombro)
+DÍA 3: LEG (Pierna Completa - Cuádriceps y Glúteo)
+DÍA 4: PULL (Espalda y Cadena Posterior - Grosor y Lumbar)
+DÍA 5: ARMS (Brazos - Bíceps y Tríceps)
+DÍA 6: LEG (Pierna - Cadena Posterior y Aductor)
+```
+
+### 3. Líneas de Ejercicio y Series
+Escribe cada ejercicio en una línea seguido de dos puntos `:` o paréntesis con el número de series y repeticiones. Patrones reconocidos automáticamente:
+- `3 series de 4-6 reps (Pesadas)`
+- `3 series de 8-10 reps (RIR 0 al fallo)`
+- `4x12 reps`
+- `3 × 10-12 reps`
+- `Serie piramidal (12, 10, 8, 6, 4 reps)`
+
+### 4. Directrices Técnicas y Metodología JPEREZ
+Puedes incluir entre paréntesis indicaciones que la app convertirá automáticamente en directrices interactivas:
+- `(Excéntrico en 5 seg / Bajadas en 5s)`
+- `(RIR 0 al fallo muscular)`
+- `(Rest pause: descanso 15s y 2-3 reps extra)`
+- `(Tempo 1-3-1)`
+- `(3 seg de contracción isométrica arriba)`
+- `(1 rep 1 rebote, 1 rep 2 rebotes... hasta 10 rebotes)`
+
+### 📋 Ejemplo de Documento Modelo
+```text
+PLAN DE ENTRENAMIENTO · JPEREZCOACH
+Atleta: David Otero | Objetivo: Hipertrofia
+
+DÍA 1: PULL (Espalda y Bíceps)
+1. Dominadas/jalón: 3 series de 4-6 reps (Calienta 2/3 series y después busca series pesadas)
+2. Remo T: 3 series de 4-6 reps (Excéntrico en 5 segundos)
+3. Jalón máquina: 3 series de 8-10 reps (RIR 0 al fallo concéntrico + parciales)
+4. Remo unilateral: 2 series de 10-12 reps (Excéntrico en 5 segundos con mancuerna)
+5. Bíceps martillo mancuernas: 2 series de 8-10 reps (Rest pause)
+6. Scott máquina unilateral: 3 series de 8-10 reps (Tempo 1-3-1)
+
+DÍA 2: PUSH (Pecho y Hombro)
+1. Press inclinado 60%: 3 series de 8-10 reps
+2. Press plano máquina: Serie piramidal (12, 10, 8, 6, 4 reps)
+3. Apertura unilateral desde abajo: 3 series de 15 reps (Bajadas en 5 seg en polea baja)
+4. Press hombro neutro: 3 series de 8-10 reps (Máximo rango de recorrido con mancuernas)
+5. Laterales máquina unilateral: 2 series de 10-12 reps (3 seg de contracción isométrica)
+6. Laterales máquina: 3 series de 6-8 reps pesadas
+```
 
 ---
 
-### 👤 4. Autenticación y Gestión de Perfiles
-- **Inicio de Sesión y Registro**: Soporte para cuentas múltiples guardadas localmente.
-- **Acceso Rápido de 1 Toque a Cuentas Demo**:
-  - `David Otero`: Atleta oficial con su plan de 6 días precargado y marcas históricas.
-  - `Jose Perez`: Head Coach y administrador del sistema.
-  - `Nuevo Atleta`: Perfil de invitado para comenzar desde cero.
-- **Editor de Perfil**: Peso corporal, estatura, objetivo deportivo y bio.
+## 🚀 Arquitectura Completa de la Aplicación
+
+- **🏋️‍♂️ Entrenar (Live Workout Hevy Style)**:
+  - Registro serie a serie con valores anteriores (*Ghost values*).
+  - Selector de series: Normal, Calentamiento (W), Drop Set (D), Fallo / RIR 0 (F).
+  - Temporizador de descanso flotante automático con sonido y vibración.
+  - Barra flotante minimizable que sigue activa mientras navegas por la app.
+  - Celebración con confeti al finalizar y resumen con nuevos récords (PRs).
+- **📋 Rutinas Dinámicas**:
+  - Creación manual, duplicación, edición de series/reps y borrado de cualquier rutina.
+  - Subida de archivos PDF o pegado de texto.
+  - Exportación individual a PDF imprimible, JSON o WhatsApp.
+- **💬 Chat Doble Canal**:
+  - Canal con Jose Perez (Coach IA con su metodología) + enlace directo a WhatsApp (`+34 658 50 71 36`).
+  - Feed de comunidad JPEREZ TEAM con tarjetas de entreno y reacciones con emojis.
+- **📊 Historial & Analítica**:
+  - Matriz Heatmap de consistencia de 12 semanas.
+  - Calculadora de Discos de Barra Olímpica (*Plate Calculator*).
+  - Calculadora de 1RM con tabla de porcentajes de entrenamiento.
+  - Salón de la Fama de PRs.
+- **👤 Perfil y Sesión**:
+  - Cuentas de demostración de 1 toque (David Otero, Jose Perez, Invitado).
+  - Registro de atletas con peso, estatura, objetivo y racha activa.
 
 ---
 
-### 📊 5. Analítica, Historial y Herramientas Gym
-- **Calendario de Consistencia (Heatmap de 12 semanas)**: Matriz estilo GitHub/Hevy con 5 niveles de intensidad de volumen entrenado por día.
-- **Salón de la Fama de Récords Personales (PRs)**: Seguimiento del peso máximo levantado y 1RM estimado en los ejercicios clave.
-- **Calculadora de Discos de Barra (*Plate Calculator*)**:
-  - Gráfico interactivo con la barra olímpica y discos oficiales de competición codificados por color (25kg rojo, 20kg azul, 15kg amarillo, 10kg verde, 5kg blanco, 2.5kg y 1.25kg).
-  - Desglose exacto de discos por lado.
-- **Calculadora de 1RM**: Fórmulas de Epley y Brzycki con tabla de porcentajes de carga (100% a 50%) y guía de repeticiones.
-- **Copia de Seguridad**: Exporta e importa toda tu base de datos en un clic en formato `.json`.
+## 🛠️ Despliegue en GitHub Pages
 
----
-
-### 📚 6. Base de Datos de 100+ Ejercicios y Vídeos de Técnica
-- Incluye los **35 ejercicios oficiales verificados de la rutina de 6 Días de Jose Perez**:
-  1. **Día 1 PULL**: Dominadas/jalón, Remo T (5s excéntrica), Jalón máquina al fallo, Remo unilateral, Bíceps martillo (rest-pause), Scott unilateral máquina (tempo 1-3-1).
-  2. **Día 2 PUSH**: Press inclinado 60%, Press plano máquina (piramidal 12-10-8-6-4), Apertura unilateral polea baja, Press hombro neutro, Laterales máquina (isometría 3s).
-  3. **Día 3 LEG**: Prensa horizontal unilateral, Sentadilla Hack (5s bajada), Zancadas Smith (RIR 0), Belt squat cuádriceps (rebotes acumulativos 1 a 10), Hip thrust unilateral, Gemelo de pie.
-  4. **Día 4 PULL**: Hiperextensión lumbar con disco, Remo barra Smith (5s excéntrica), Jalón unilateral polea alta, Remo agarre supino, Low row.
-  5. **Día 5 ARMS**: Polea cuerda baja (3s isométrico), Polea alta cuerda tríceps, Curl bíceps barra Z (RIR 0), Press francés mancuernas, Scott unilateral, Extensión tríceps polea.
-  6. **Día 6 LEG**: Aductor máquina (5s excéntrica), Peso muerto con barra pesada, Sentadilla sumo Smith, Femoral tumbado, Femoral sentado, Extensión cuádriceps al fallo.
-- Botón directo `🎬 Vídeo` en cada ejercicio para reproducir demostraciones de técnica en vídeo sin perder tus series ni el cronómetro en curso.
-
----
-
-## 🛠️ Tecnologías Empleadas
-
-- **HTML5 Semántico y PWA**: `manifest.webmanifest` y `sw.js` con Service Worker para funcionamiento sin conexión (*Offline-First*).
-- **CSS3 Moderno**: Variables personalizadas, Obsidian Dark Theme, Flexbox, CSS Grid y diseño táctil optimizado para iOS y Android.
-- **JavaScript Vanilla Modular**:
-  - `state.js`: Estado reactivo y persistencia local.
-  - `db-ejercicios.js`: Catálogo maestro de ejercicios y búsqueda instantánea.
-  - `rutinas-oficiales.js`: Rutinas de Jose Perez y plantillas clásicas.
-  - `auth.js`: Autenticación, perfiles y cambio rápido de cuenta.
-  - `workout-engine.js`: Motor de entrenamiento en vivo, temporizadores y síntesis Web Audio.
-  - `routine-builder.js`: Constructor y editor de rutinas.
-  - `chat-engine.js`: Motor de chat con IA y enlaces a WhatsApp.
-  - `analytics.js`: Heatmap, calculadora de discos y fórmulas 1RM.
-  - `app.js`: Enrutador de pestañas, modales y controlador visual.
-
----
-
-## 📱 Instalación en el Teléfono Móvil
-
-1. Abre el enlace en Safari (iOS) o Chrome (Android):  
-   `https://abraveses-de-tera.github.io/JPEREZCOACHAPP/`
-2. Pulsa en **Compartir** o en el menú de tres puntos.
-3. Selecciona **"Añadir a la pantalla de inicio"**.
-4. ¡La app se abrirá a pantalla completa como una aplicación nativa sin barra de navegación del navegador!
-
----
-
-## 📞 Contacto Oficial Jose Perez
-
-- 📱 **WhatsApp / Teléfono:** `+34 658 50 71 36`
-- ✉️ **Email:** `jperez@mail.com`
-- 🌐 **Sitio Web:** `jperezcoach.com`
+1. Ve a **Settings > Pages** en el repositorio [JPEREZCOACHAPP](https://github.com/Abraveses-de-tera/JPEREZCOACHAPP/settings/pages).
+2. En **Build and deployment > Source**, elige **Deploy from a branch**.
+3. Selecciona la rama `main` y carpeta `/(root)`.
+4. Tu aplicación estará disponible en vivo en:  
+   👉 **[https://abraveses-de-tera.github.io/JPEREZCOACHAPP/](https://abraveses-de-tera.github.io/JPEREZCOACHAPP/)**

@@ -1,6 +1,6 @@
 // =============================================================================
 // JPEREZCOACH APP · CREADOR Y EDITOR DE RUTINAS PERSONALIZADAS
-// Interfaz Hevy Style: Constructor de rutinas, reordenación, plantillas y exportación
+// Gestión dinámica completa: crear, modificar, duplicar, eliminar y exportar
 // =============================================================================
 
 (function(global) {
@@ -13,7 +13,7 @@
     // Iniciar nuevo borrador de rutina
     startNewRoutine: function() {
       this.currentDraft = {
-        id: null, // se generará al guardar
+        id: null,
         titulo: '',
         categoria: 'Mis Rutinas',
         etiqueta: 'CUSTOM',
@@ -37,14 +37,14 @@
       return this.currentDraft;
     },
 
-    // Duplicar una rutina (oficial o personalizada) para adaptarla
+    // Duplicar una rutina para adaptarla
     duplicateRoutine: function(routineId) {
       var all = global.RutinasMaestras ? global.RutinasMaestras.getAll() : [];
       var found = all.find(function(r) { return r.id === routineId; });
       if (!found) return null;
 
       var copy = JSON.parse(JSON.stringify(found));
-      copy.id = null;
+      copy.id = 'rutina_' + Date.now();
       copy.titulo = copy.titulo + ' (Copia)';
       copy.categoria = 'Mis Rutinas';
       copy.esOficial = false;
@@ -137,46 +137,45 @@
     saveRoutine: function(routineData) {
       if (!global.AppState) return null;
 
-      if (routineData.id && !routineData.esOficial) {
-        // Actualizar existente
-        return global.AppState.updateCustomRoutine(routineData.id, routineData);
-      } else {
-        // Nueva rutina
-        routineData.id = 'rutina_custom_' + Date.now();
-        routineData.esOficial = false;
-        return global.AppState.addCustomRoutine(routineData);
+      if (routineData.id) {
+        var existing = global.AppState.routines.find(function(r) { return r.id === routineData.id; });
+        if (existing) {
+          return global.AppState.updateRoutine(routineData.id, routineData);
+        }
       }
+
+      // Nueva rutina
+      if (!routineData.id) {
+        routineData.id = 'rutina_' + Date.now();
+      }
+      return global.AppState.addRoutine(routineData);
     },
 
-    // Eliminar rutina personalizada
+    // Eliminar rutina (personalizada u oficial)
     deleteRoutine: function(id) {
       if (!global.AppState) return false;
-      global.AppState.deleteCustomRoutine(id);
-      return true;
+      return global.AppState.deleteRoutine(id);
     },
 
     // Exportar una rutina a formato JSON
     exportRoutineToJSON: function(routineId) {
-      var all = global.RutinasMaestras ? global.RutinasMaestras.getAll() : [];
-      var found = all.find(function(r) { return r.id === routineId; });
-      if (!found) return null;
-      return JSON.stringify(found, null, 2);
+      return global.RutinasMaestras ? global.RutinasMaestras.exportarAJSON(routineId) : null;
     },
 
     // Importar una rutina desde archivo JSON
     importRoutineFromJSON: function(jsonString) {
       try {
         var parsed = JSON.parse(jsonString);
-        if (!parsed.titulo || !parsed.ejercicios) {
-          return { success: false, message: 'El formato del archivo no es una rutina válida.' };
+        var rData = parsed.routine || parsed;
+        if (!rData.titulo || !rData.ejercicios) {
+          return { success: false, message: 'El archivo no contiene una rutina válida.' };
         }
-        parsed.id = null; // forzar nueva ID
-        parsed.esOficial = false;
-        parsed.titulo = parsed.titulo + ' (Importada)';
-        var saved = this.saveRoutine(parsed);
+        rData.id = 'rutina_imp_' + Date.now();
+        rData.titulo = rData.titulo + ' (Importada)';
+        var saved = this.saveRoutine(rData);
         return { success: true, routine: saved };
       } catch (e) {
-        return { success: false, message: 'Error procesando el JSON de la rutina: ' + e.message };
+        return { success: false, message: 'Error procesando el JSON: ' + e.message };
       }
     }
   };

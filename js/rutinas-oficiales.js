@@ -1,15 +1,13 @@
 // =============================================================================
-// JPEREZCOACH APP · RUTINAS OFICIALES Y PLANTILLAS MAESTRAS
-// Metodología de Alta Intensidad de Jose Perez + Plantillas Clásicas Hevy Style
+// JPEREZCOACH APP · GESTOR DE RUTINAS DINÁMICAS Y PLANTILLAS MAESTRAS
+// Exportación a JSON, PDF profesional y WhatsApp + Restauración y Eliminación
 // =============================================================================
 
 (function(global) {
   'use strict';
 
-  var RUTINAS_OFICIALES = [
-    // -------------------------------------------------------------------------
-    // 1. ROTACIÓN OFICIAL DE 6 DÍAS JPEREZCOACH (ALTA INTENSIDAD E HIPERTROFIA)
-    // -------------------------------------------------------------------------
+  // Plantillas oficiales predefinidas del método JPEREZCOACH
+  var PLANTILLAS_OFICIALES = [
     {
       id: "D1",
       codigo: "D1",
@@ -470,140 +468,46 @@
           ]
         }
       ]
-    },
-
-    // -------------------------------------------------------------------------
-    // 2. PLANTILLAS CLÁSICAS POPULARES DE GIMNASIO (HEVY STYLE)
-    // -------------------------------------------------------------------------
-    {
-      id: "torso_pesado",
-      codigo: "TORSO",
-      titulo: "Torso Fuerza e Hipertrofia",
-      categoria: "Plantillas Clásicas",
-      etiqueta: "TORSO",
-      descripcion: "Sesión completa para tren superior combinando press banca, remo con barra y elevaciones laterales.",
-      tiempoEstimadoMin: 60,
-      foco: ["Pecho", "Espalda", "Hombros"],
-      esOficial: false,
-      color: "#06b6d4",
-      ejercicios: [
-        {
-          exerciseId: "press_banca_plano_barra",
-          name: "Press banca plano con barra",
-          targetReps: "6-8",
-          notes: "Pesado y técnico. Descanso 2-3 min entre series.",
-          defaultSets: [
-            { type: "pesada", reps: "6-8", weight: 0 },
-            { type: "pesada", reps: "6-8", weight: 0 },
-            { type: "pesada", reps: "6-8", weight: 0 }
-          ]
-        },
-        {
-          exerciseId: "remo_con_barra_90",
-          name: "Remo con barra 90 grados",
-          targetReps: "8-10",
-          notes: "Tracción horizontal con codos hacia atrás.",
-          defaultSets: [
-            { type: "normal", reps: "8-10", weight: 0 },
-            { type: "normal", reps: "8-10", weight: 0 },
-            { type: "normal", reps: "8-10", weight: 0 }
-          ]
-        },
-        {
-          exerciseId: "press_militar_barra_de_pie",
-          name: "Press militar con barra de pie",
-          targetReps: "8-10",
-          notes: "Fuerza de hombros y estabilidad de core.",
-          defaultSets: [
-            { type: "normal", reps: "8-10", weight: 0 },
-            { type: "normal", reps: "8-10", weight: 0 },
-            { type: "normal", reps: "8-10", weight: 0 }
-          ]
-        },
-        {
-          exerciseId: "elevaciones_laterales_mancuernas",
-          name: "Elevaciones laterales con mancuernas",
-          targetReps: "12-15",
-          notes: "Control estricto, tempo 2-0-1.",
-          defaultSets: [
-            { type: "normal", reps: "12-15", weight: 0 },
-            { type: "normal", reps: "12-15", weight: 0 },
-            { type: "drop_set", reps: "15", weight: 0 }
-          ]
-        }
-      ]
-    },
-    {
-      id: "pierna_fuerza",
-      codigo: "PIERNA",
-      titulo: "Pierna Completa · Fuerza Fundacional",
-      categoria: "Plantillas Clásicas",
-      etiqueta: "PIERNA",
-      descripcion: "Sentadilla trasera pesada, peso muerto rumano, prensa y gemelo.",
-      tiempoEstimadoMin: 65,
-      foco: ["Cuádriceps", "Isquios", "Glúteo"],
-      esOficial: false,
-      color: "#14b8a6",
-      ejercicios: [
-        {
-          exerciseId: "sentadilla_trasera_barra",
-          name: "Sentadilla trasera con barra",
-          targetReps: "5-6",
-          notes: "Profundidad rompiendo el paralelo.",
-          defaultSets: [
-            { type: "pesada", reps: "5", weight: 0 },
-            { type: "pesada", reps: "5", weight: 0 },
-            { type: "pesada", reps: "5", weight: 0 }
-          ]
-        },
-        {
-          exerciseId: "peso_muerto_rumano_mancuernas",
-          name: "Peso muerto rumano con mancuernas",
-          targetReps: "8-10",
-          notes: "Bisagra de cadera máxima con estiramiento.",
-          defaultSets: [
-            { type: "normal", reps: "8-10", weight: 0 },
-            { type: "normal", reps: "8-10", weight: 0 },
-            { type: "normal", reps: "8-10", weight: 0 }
-          ]
-        },
-        {
-          exerciseId: "prensa_45_grados",
-          name: "Prensa de 45 grados",
-          targetReps: "10-12",
-          notes: "Recorrido continuo sin bloquear rodillas.",
-          defaultSets: [
-            { type: "normal", reps: "10-12", weight: 0 },
-            { type: "normal", reps: "10-12", weight: 0 },
-            { type: "normal", reps: "10-12", weight: 0 }
-          ]
-        }
-      ]
     }
   ];
 
   var RutinasMaestras = {
-    // Obtener todas las rutinas (oficiales + personalizadas del usuario)
+    PLANTILLAS_OFICIALES: PLANTILLAS_OFICIALES,
+
+    // Obtener todas las rutinas dinámicas actualmente activas en la app
     getAll: function() {
-      var custom = (global.AppState && global.AppState.customRoutines) ? global.AppState.customRoutines : [];
-      return RUTINAS_OFICIALES.concat(custom);
-    },
-
-    getOficiales: function() {
-      return RUTINAS_OFICIALES;
-    },
-
-    getPersonalizadas: function() {
-      return (global.AppState && global.AppState.customRoutines) ? global.AppState.customRoutines : [];
+      if (global.AppState && global.AppState.routines) {
+        return global.AppState.routines;
+      }
+      return PLANTILLAS_OFICIALES;
     },
 
     getById: function(id) {
       if (!id) return null;
-      var all = this.getAll();
-      return all.find(function(r) { return r.id === id; }) || null;
+      var list = this.getAll();
+      return list.find(function(r) { return r.id === id; }) || null;
     },
 
-    // Generar estructura para entrenamiento vacío (Hevy "Start an Empty Workout")
+    // Borrar rutina de la aplicación
+    borrarRutina: function(id) {
+      if (!global.AppState) return false;
+      return global.AppState.deleteRoutine(id);
+    },
+
+    // Restaurar el plan original de 6 días de Jose Perez
+    restaurarOficiales: function() {
+      if (!global.AppState) return false;
+      return global.AppState.restoreDefaultRoutines();
+    },
+
+    // Borrar todas las rutinas para empezar completamente de cero
+    borrarTodas: function() {
+      if (!global.AppState) return false;
+      global.AppState.clearAllRoutines();
+      return true;
+    },
+
+    // Crear estructura vacía para entrenamiento libre
     crearEntrenamientoVacio: function() {
       return {
         id: "entreno_vacio_" + Date.now(),
@@ -613,6 +517,148 @@
         foco: ["General"],
         ejercicios: []
       };
+    },
+
+    // =========================================================================
+    // EXPORTACIÓN DE RUTINAS (JSON, PDF PROFESIONAL Y WHATSAPP)
+    // =========================================================================
+
+    // 1. Exportar a JSON descargable
+    exportarAJSON: function(routineId) {
+      var r = this.getById(routineId);
+      if (!r) return null;
+
+      var exportObj = {
+        app: "JPEREZCOACH PRO",
+        version: "3.0.0",
+        exportedAt: new Date().toISOString(),
+        routine: r
+      };
+
+      var jsonStr = JSON.stringify(exportObj, null, 2);
+      var blob = new Blob([jsonStr], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'rutina_' + (r.titulo || 'plan').toLowerCase().replace(/[^a-z0-9]/g, '_') + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      return jsonStr;
+    },
+
+    // 2. Exportar a texto formateado para WhatsApp
+    exportarAWhatsApp: function(routineId) {
+      var r = this.getById(routineId);
+      if (!r) return '';
+
+      var user = (global.AppState && global.AppState.currentUser) ? global.AppState.currentUser : { name: 'Atleta' };
+      var txt = '🏋️‍♂️ *PLAN DE ENTRENAMIENTO · JPEREZCOACH*\n';
+      txt += '👤 *Atleta:* ' + user.name + '\n';
+      txt += '📋 *Rutina:* ' + r.titulo + '\n';
+      if (r.descripcion) txt += '💡 *Foco:* ' + r.descripcion + '\n';
+      txt += '⏱️ *Tiempo estimado:* ' + (r.tiempoEstimadoMin || 60) + ' min\n\n';
+      txt += '━━━━━━━━━━━━━━━━━━━━\n';
+      txt += '📝 *EJERCICIOS Y DIRECTRICES:*\n';
+
+      (r.ejercicios || []).forEach(function(ex, idx) {
+        var numSets = ex.defaultSets ? ex.defaultSets.length : 3;
+        txt += '\n*' + (idx + 1) + '. ' + ex.name + '*\n';
+        txt += '   • ' + numSets + ' series × ' + (ex.targetReps || '8-10') + ' reps\n';
+        if (ex.notes) txt += '   • 🎯 Directriz: ' + ex.notes + '\n';
+      });
+
+      txt += '\n━━━━━━━━━━━━━━━━━━━━\n';
+      txt += '⚡ _Metodología JPEREZ: Series a RIR 0 y excéntricas controladas en 5s._\n';
+      txt += '📱 jperezcoach.com · +34 658 50 71 36';
+
+      return txt;
+    },
+
+    // 3. Generar e Imprimir / Guardar como PDF profesional
+    exportarAPDFImprimible: function(routineId) {
+      var r = this.getById(routineId);
+      if (!r) return;
+
+      var user = (global.AppState && global.AppState.currentUser) ? global.AppState.currentUser : { name: 'Atleta JPEREZ' };
+      var printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Por favor permite las ventanas emergentes en tu navegador para generar el PDF.');
+        return;
+      }
+
+      var html = '<!DOCTYPE html><html lang="es"><head>' +
+        '<meta charset="UTF-8"><title>' + r.titulo + ' · JPEREZCOACH</title>' +
+        '<style>' +
+          '@page { size: A4 portrait; margin: 15mm; }' +
+          'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; line-height: 1.4; margin: 0; padding: 20px; font-size: 13px; }' +
+          '.header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0284c7; padding-bottom: 15px; margin-bottom: 20px; }' +
+          '.logo-title { font-size: 24px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }' +
+          '.logo-title span { color: #0284c7; }' +
+          '.meta-badge { font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 99px; font-weight: 700; }' +
+          '.athlete-bar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 15px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px; }' +
+          '.routine-heading { font-size: 18px; font-weight: 800; color: #0369a1; margin-bottom: 6px; }' +
+          '.routine-desc { font-size: 12px; color: #64748b; margin-bottom: 15px; }' +
+          'table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }' +
+          'th { background: #0f172a; color: #ffffff; text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }' +
+          'td { padding: 9px 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; vertical-align: top; }' +
+          'tr:nth-child(even) td { background: #f8fafc; }' +
+          '.ex-name { font-weight: 800; color: #0f172a; display: block; font-size: 13px; }' +
+          '.ex-notes { color: #0284c7; font-size: 11px; font-weight: 600; margin-top: 2px; }' +
+          '.checkbox-col { width: 35px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px; height: 16px; margin: 0 auto; }' +
+          '.footer { border-top: 1px solid #cbd5e1; padding-top: 12px; font-size: 11px; color: #64748b; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }' +
+        '</style></head><body>' +
+        '<div class="header">' +
+          '<div>' +
+            '<div class="logo-title">JPEREZ<span>COACH</span></div>' +
+            '<div style="font-size: 11px; color: #64748b; font-weight: 600;">ALTA INTENSIDAD · METODOLOGÍA OFICIAL</div>' +
+          '</div>' +
+          '<div style="text-align: right;">' +
+            '<span class="meta-badge">' + (r.etiqueta || 'PLAN DE ENTRENO') + '</span>' +
+            '<div style="font-size: 11px; color: #64748b; margin-top: 4px;">Fecha: ' + new Date().toLocaleDateString() + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="athlete-bar">' +
+          '<div><strong>Atleta:</strong> ' + user.name + '</div>' +
+          '<div><strong>Entrenador:</strong> Jose Perez</div>' +
+          '<div><strong>Objetivo:</strong> Hipertrofia & RIR 0</div>' +
+        '</div>' +
+        '<div class="routine-heading">' + r.titulo + '</div>' +
+        '<div class="routine-desc">' + (r.descripcion || 'Plan estructurado para sobrecarga progresiva y control excéntrico estricto.') + '</div>' +
+        '<table>' +
+          '<thead>' +
+            '<tr>' +
+              '<th style="width: 5%;">#</th>' +
+              '<th style="width: 45%;">EJERCICIO Y DIRECTRICES TÉCNICAS</th>' +
+              '<th style="width: 15%;">SERIES</th>' +
+              '<th style="width: 15%;">REPS</th>' +
+              '<th style="width: 20%; text-align: center;">REGISTRO KG / OK</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>';
+
+      (r.ejercicios || []).forEach(function(ex, idx) {
+        var numSets = ex.defaultSets ? ex.defaultSets.length : 3;
+        html += '<tr>' +
+          '<td style="font-weight: 800; color: #64748b;">' + (idx + 1) + '</td>' +
+          '<td><span class="ex-name">' + ex.name + '</span>' +
+            (ex.notes ? '<div class="ex-notes">🎯 ' + ex.notes + '</div>' : '') +
+          '</td>' +
+          '<td><strong>' + numSets + ' series</strong></td>' +
+          '<td>' + (ex.targetReps || '8-10') + '</td>' +
+          '<td style="text-align: center; color: #94a3b8; font-size: 10px;">[ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; kg ]</td>' +
+        '</tr>';
+      });
+
+      html += '</tbody></table>' +
+        '<div class="footer">' +
+          '<div><strong>Jose Perez Coach</strong> · Tel: +34 658 50 71 36 · jperez@mail.com</div>' +
+          '<div>jperezcoach.com</div>' +
+        '</div>' +
+        '<script>window.onload = function() { window.print(); };</' + 'script>' +
+        '</body></html>';
+
+      printWindow.document.write(html);
+      printWindow.document.close();
     }
   };
 

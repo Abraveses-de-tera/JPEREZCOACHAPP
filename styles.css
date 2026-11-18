@@ -2245,3 +2245,502 @@ body.modal-open {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+/* =============================================================================
+   ESTILOS PARA IMPORTADOR DE PDF, GUÍA DE FORMATO Y EXPORTACIÓN DE RUTINAS
+   ============================================================================= */
+
+/* Botón Subir PDF en Cabecera */
+.btn-header-pdf {
+  background: rgba(0, 210, 255, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-header-pdf:hover {
+  background: var(--accent-cyan);
+  color: #080c14;
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+}
+
+/* Acciones en la cabecera de la tarjeta de rutina */
+.routine-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Barra de utilidades en la pestaña de Rutinas */
+.routines-toolbar-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.btn-toolbar-link {
+  background: transparent;
+  border: none;
+  color: var(--accent-sky);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-toolbar-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.btn-toolbar-link.text-danger {
+  color: var(--accent-rose);
+}
+
+.toolbar-sep {
+  color: var(--text-dim);
+}
+
+.routines-header-btns {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* =============================================================================
+   MODAL DE IMPORTACIÓN DE PDF Y TEXTO PLANO
+   ============================================================================= */
+.pdf-importer-dialog {
+  max-width: 600px;
+}
+
+.modal-header-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.import-method-tabs {
+  display: flex;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+}
+
+.import-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.import-tab-btn.active {
+  background: var(--bg-card);
+  color: var(--accent-cyan);
+  box-shadow: var(--shadow-sm);
+}
+
+.import-tab-panel {
+  display: none;
+}
+
+.import-tab-panel.active {
+  display: block;
+}
+
+/* Dropzone */
+.pdf-dropzone {
+  border: 2px dashed var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pdf-dropzone:hover, .pdf-dropzone.dragover {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 210, 255, 0.05);
+}
+
+.dropzone-icon {
+  font-size: 2.5rem;
+}
+
+.pdf-dropzone h4 {
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.pdf-dropzone p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.selected-file-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-emerald);
+  margin-top: 0.5rem;
+}
+
+.guide-trigger-banner {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--accent-sky);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.modal-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* =============================================================================
+   MODAL DE VISTA PREVIA Y CONFIRMACIÓN DE IMPORTACIÓN
+   ============================================================================= */
+.pdf-preview-dialog {
+  max-width: 680px;
+}
+
+.import-preview-body {
+  max-height: 480px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 4px;
+}
+
+.preview-import-day-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.day-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.5rem;
+}
+
+.day-card-header h4 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.day-exercises-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.import-ex-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+.import-ex-info strong {
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.import-ex-notes {
+  font-size: 0.78rem;
+  color: var(--accent-sky);
+  margin-top: 2px;
+}
+
+.import-ex-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.pill-matched {
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.pill-unmatched {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--bg-input);
+  color: var(--text-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* =============================================================================
+   MODAL GUÍA DE FORMATO PDF
+   ============================================================================= */
+.format-guide-dialog {
+  max-width: 650px;
+}
+
+.format-guide-body {
+  max-height: 520px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 4px;
+}
+
+.guide-intro {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.guide-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.guide-rule-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.rule-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  color: #080c14;
+  font-size: 0.85rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guide-rule-card strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.guide-rule-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.guide-rule-card code {
+  background: var(--bg-input);
+  color: var(--accent-sky);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+
+.code-pill {
+  background: var(--bg-input);
+  color: #bae6fd;
+  border-left: 3px solid var(--accent-cyan);
+  padding: 4px 8px;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+  font-family: monospace;
+}
+
+.guide-rule-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+.sample-text-wrap {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+}
+
+.sample-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.sample-code-box {
+  background: #05080e;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  color: #a5f3fc;
+  font-family: Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* =============================================================================
+   MODAL DE EXPORTACIÓN DE RUTINA
+   ============================================================================= */
+.export-routine-dialog {
+  max-width: 520px;
+}
+
+.export-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.export-option-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.export-option-card:hover {
+  border-color: var(--accent-sky);
+  background: var(--bg-card-hover);
+}
+
+.export-opt-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.export-opt-info {
+  flex-grow: 1;
+}
+
+.export-opt-info strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin-bottom: 0.2rem;
+}
+
+.export-opt-info p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Estilos de estado vacío con acciones */
+.empty-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+/* =============================================================================
+   ESTILOS DE IMPRESIÓN (PRINT TO PDF)
+   ============================================================================= */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .app-header, .app-bottom-nav, .sticky-workout-bar, #floating-rest-timer {
+    display: none !important;
+  }
+}

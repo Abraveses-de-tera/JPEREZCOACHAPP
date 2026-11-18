@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="JPEREZCOACH">
-  <meta name="description" content="Aplicación de entrenamiento y seguimiento estilo Hevy personalizada para JPEREZCOACH. Registro en vivo, rotación de 6 días, creador de rutinas, chat con el entrenador y analítica avanzada.">
+  <meta name="description" content="Aplicación de entrenamiento y seguimiento estilo Hevy personalizada para JPEREZCOACH. Registro en vivo, rotación de 6 días, importador de rutinas en PDF, creador de rutinas, chat con el entrenador y analítica avanzada.">
 
   <title>JPEREZCOACH PRO · Workout Tracker</title>
 
@@ -19,7 +19,7 @@
 
   <!-- Open Graph -->
   <meta property="og:title" content="JPEREZCOACH PRO · Workout Tracker">
-  <meta property="og:description" content="Entrena con la metodología de Jose Perez. Rutinas de alta intensidad, registro Hevy en vivo, chat y analítica.">
+  <meta property="og:description" content="Entrena con la metodología de Jose Perez. Rutinas en PDF, registro Hevy en vivo, chat y analítica.">
   <meta property="og:image" content="og-image.jpg">
   <meta property="og:type" content="website">
 
@@ -47,6 +47,9 @@
       </div>
 
       <div class="header-user-actions">
+        <button class="btn-header-pdf" id="btn-header-upload-pdf" title="Subir rutina en PDF">
+          📄 Subir PDF
+        </button>
         <div class="streak-pill" id="header-streak-badge" title="Racha de entrenamientos activos">
           🔥 5d
         </div>
@@ -76,13 +79,16 @@
           <div class="hero-content">
             <span class="hero-tag">ALTA INTENSIDAD · METODOLOGÍA JPEREZ</span>
             <h2 class="hero-title">Empieza a Registrar tu Sesión</h2>
-            <p class="hero-desc">Lleva tus series a RIR 0 con excéntricas de 5s y bate tus marcas anteriores.</p>
+            <p class="hero-desc">Lleva tus series a RIR 0 con excéntricas de 5s, o sube y exporta tu propia rutina en PDF.</p>
             <div class="hero-buttons">
               <button class="btn btn-primary btn-large" id="btn-start-empty-workout">
                 <span class="btn-icon">⚡</span> Iniciar Entrenamiento Libre
               </button>
-              <button class="btn btn-secondary" id="btn-hero-new-routine">
-                <span class="btn-icon">➕</span> Crear Nueva Rutina
+              <button class="btn btn-secondary" id="btn-hero-upload-pdf">
+                <span class="btn-icon">📄</span> Subir Rutina en PDF
+              </button>
+              <button class="btn btn-outline" id="btn-hero-new-routine">
+                <span class="btn-icon">➕</span> Crear Rutina Manual
               </button>
             </div>
           </div>
@@ -95,7 +101,7 @@
           </div>
         </div>
 
-        <!-- Contenedor dinámico de rutinas (Oficiales 6 Días + Personalizadas) -->
+        <!-- Contenedor dinámico de rutinas (Oficiales, Importadas y Creadas) -->
         <div id="routines-list-container" class="routines-section-wrap">
           <!-- Renderizado dinámicamente por App.renderWorkoutTab() -->
         </div>
@@ -104,7 +110,7 @@
     </section>
 
     <!-- -----------------------------------------------------------------------
-         PESTAÑA 2: RUTINAS (ROUTINES BUILDER TAB)
+         PESTAÑA 2: RUTINAS (ROUTINES HUB & BUILDER)
          ----------------------------------------------------------------------- -->
     <section id="tab-routines" class="view-screen">
       <div class="screen-container">
@@ -437,7 +443,226 @@
   </nav>
 
   <!-- =========================================================================
-       MODAL 1: ENTRENAMIENTO EN VIVO A PANTALLA COMPLETA (ACTIVE WORKOUT)
+       MODAL: SUBIR RUTINA EN PDF O PEGAR TEXTO (PDF IMPORTER)
+       ========================================================================= -->
+  <div id="modal-pdf-importer" class="modal-dialog-overlay">
+    <div class="modal-dialog-content pdf-importer-dialog">
+      <div class="modal-dialog-header">
+        <div class="modal-header-with-badge">
+          <h3>📄 Subir Rutina en PDF</h3>
+          <span class="badge-role">Importador Inteligente</span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-pdf-importer">✕</button>
+      </div>
+
+      <!-- Selector de método: Archivo PDF vs Pegar Texto -->
+      <div class="import-method-tabs">
+        <button class="import-tab-btn active" data-target="panel-pdf-file">
+          📁 Archivo PDF
+        </button>
+        <button class="import-tab-btn" data-target="panel-plain-text">
+          📝 Pegar Texto
+        </button>
+      </div>
+
+      <!-- Panel 1: Archivo PDF (Drag & Drop) -->
+      <div id="panel-pdf-file" class="import-tab-panel active">
+        <div class="pdf-dropzone" id="pdf-dropzone">
+          <div class="dropzone-icon">📄</div>
+          <h4>Arrastra aquí tu PDF de entrenamiento</h4>
+          <p>O pulsa para examinar tus archivos (.pdf)</p>
+          <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;">
+          <button class="btn btn-secondary btn-sm" id="btn-browse-pdf">Seleccionar Archivo PDF</button>
+          <span id="selected-pdf-name" class="selected-file-label"></span>
+        </div>
+      </div>
+
+      <!-- Panel 2: Pegar Texto Plano -->
+      <div id="panel-plain-text" class="import-tab-panel">
+        <div class="form-group">
+          <label>Pega aquí el texto de tu rutina (WhatsApp, Notas, Word):</label>
+          <textarea id="plain-text-input" class="form-control" rows="8" placeholder="DÍA 1: PULL (Espalda y Bíceps)&#10;1. Dominadas: 3 series de 6-8 reps (5s bajada)&#10;2. Remo con mancuerna: 3x10 reps&#10;&#10;DÍA 2: PUSH (Pecho y Hombro)&#10;1. Press inclinado: 3 series de 8-10 reps"></textarea>
+        </div>
+      </div>
+
+      <!-- Guía colapsable de formato -->
+      <div class="guide-trigger-banner">
+        <span>💡 ¿Cómo preparar el PDF para que se entienda al 100%?</span>
+        <button class="btn-link" id="btn-open-format-guide">Ver Guía y Ejemplo ➔</button>
+      </div>
+
+      <div class="modal-dialog-footer">
+        <button class="btn btn-secondary" id="btn-cancel-pdf-import">Cancelar</button>
+        <button class="btn btn-primary" id="btn-process-import">Analizar y Procesar Rutina ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: VISTA PREVIA Y CONFIRMACIÓN DE RUTINA IMPORTADA (PREVIEW IMPORT)
+       ========================================================================= -->
+  <div id="modal-pdf-preview" class="modal-dialog-overlay">
+    <div class="modal-dialog-content pdf-preview-dialog">
+      <div class="modal-dialog-header">
+        <div>
+          <h3 id="pdf-preview-plan-title">Rutina Detectada</h3>
+          <span id="pdf-preview-meta" class="text-dim"></span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-pdf-preview">✕</button>
+      </div>
+
+      <div class="import-preview-body" id="pdf-preview-body">
+        <!-- Tarjetas de días y ejercicios analizados -->
+      </div>
+
+      <div class="modal-dialog-footer">
+        <button class="btn btn-secondary" id="btn-back-to-import">Volver</button>
+        <button class="btn btn-primary btn-large" id="btn-confirm-import-routine">
+          ✅ Guardar Rutina en Mis Rutinas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: GUÍA DE FORMATO PDF PARA ENTRENADORES Y ATLETAS
+       ========================================================================= -->
+  <div id="modal-format-guide" class="modal-dialog-overlay">
+    <div class="modal-dialog-content format-guide-dialog">
+      <div class="modal-dialog-header">
+        <h3>📖 Guía de Formato: Cómo estructurar tu PDF</h3>
+        <button class="btn-close-modal" id="btn-close-format-guide">✕</button>
+      </div>
+
+      <div class="format-guide-body">
+        <p class="guide-intro">
+          Para que el motor inteligente de <strong>JPEREZCOACH</strong> entienda tu rutina, identifique cada día, reconozca los ejercicios y los vincule automáticamente con los vídeos de técnica oficiales, sigue esta estructura recomendada:
+        </p>
+
+        <div class="guide-rules-list">
+          <div class="guide-rule-card">
+            <span class="rule-num">1</span>
+            <div>
+              <strong>Encabezado del Plan:</strong>
+              <p>Indica el nombre del plan y el atleta al inicio (ej: <code>PLAN DE ENTRENAMIENTO - Marcos Ramos · Hipertrofia</code>).</p>
+            </div>
+          </div>
+
+          <div class="guide-rule-card">
+            <span class="rule-num">2</span>
+            <div>
+              <strong>Separación Clara de Días:</strong>
+              <p>Encabezados que comiencen por la palabra <code>DÍA</code> o <code>DIA</code> y el número / nombre del grupo muscular:</p>
+              <div class="code-pill">DÍA 1: PULL (Espalda y Bíceps)</div>
+              <div class="code-pill">DÍA 2: PUSH (Pecho y Hombro)</div>
+              <div class="code-pill">DÍA 3: LEG (Pierna Completa)</div>
+            </div>
+          </div>
+
+          <div class="guide-rule-card">
+            <span class="rule-num">3</span>
+            <div>
+              <strong>Línea por Ejercicio con Series y Repeticiones:</strong>
+              <p>Escribe el nombre del ejercicio seguido de dos puntos <code>:</code> y las series:</p>
+              <div class="code-pill">Dominadas/jalón: 3 series de 4-6 reps (Pesadas)</div>
+              <div class="code-pill">Remo T: 3 series de 4-6 reps (Excéntrico en 5s)</div>
+              <div class="code-pill">Press plano máquina: Serie piramidal (12, 10, 8, 6, 4 reps)</div>
+              <div class="code-pill">Bíceps martillo: 2 series de 8-10 reps (Rest pause)</div>
+            </div>
+          </div>
+
+          <div class="guide-rule-card">
+            <span class="rule-num">4</span>
+            <div>
+              <strong>Directrices de Intensidad Reconocidas Automáticamente:</strong>
+              <p>Puedes incluir entre paréntesis notas que la app convertirá en instrucciones interactivas:</p>
+              <ul>
+                <li><code>(RIR 0 al fallo muscular)</code></li>
+                <li><code>(Excéntrico en 5 seg / Bajadas en 5s)</code></li>
+                <li><code>(Rest pause: descanso 15s y 2-3 reps extra)</code></li>
+                <li><code>(Tempo 1-3-1)</code></li>
+                <li><code>(3 seg de contracción isométrica arriba)</code></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="sample-text-wrap">
+          <div class="sample-header">
+            <strong>📋 Texto Modelo de Ejemplo</strong>
+            <button class="btn-outline-sm" id="btn-copy-sample-template">📋 Copiar Ejemplo</button>
+          </div>
+          <pre class="sample-code-box" id="sample-template-text">PLAN DE ENTRENAMIENTO · JPEREZCOACH
+Atleta: Carlos Gómez | Objetivo: Hipertrofia
+
+DÍA 1: PULL (Espalda y Bíceps)
+1. Dominadas/jalón: 3 series de 4-6 reps (Calienta 2 series y busca series pesadas)
+2. Remo T: 3 series de 4-6 reps (Excéntrico en 5 segundos)
+3. Jalón máquina: 3 series de 8-10 reps (RIR 0 al fallo concéntrico)
+4. Bíceps martillo mancuernas: 2 series de 8-10 reps (Rest pause)
+5. Scott máquina unilateral: 3 series de 8-10 reps (Tempo 1-3-1)
+
+DÍA 2: PUSH (Pecho y Hombro)
+1. Press inclinado 60%: 3 series de 8-10 reps
+2. Press plano máquina: Serie piramidal (12, 10, 8, 6, 4 reps)
+3. Apertura unilateral polea baja: 3 series de 15 reps (Bajadas en 5 seg)
+4. Laterales máquina: 3 series de 6-8 reps (Pesadas)</pre>
+        </div>
+      </div>
+
+      <div class="modal-dialog-footer">
+        <button class="btn btn-secondary" id="btn-use-sample-in-importer">Usar este Ejemplo en el Importador</button>
+        <button class="btn btn-primary" id="btn-close-format-guide-btn">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: EXPORTAR RUTINA (JSON, PDF PROFESIONAL, WHATSAPP)
+       ========================================================================= -->
+  <div id="modal-export-routine" class="modal-dialog-overlay">
+    <div class="modal-dialog-content export-routine-dialog">
+      <div class="modal-dialog-header">
+        <div>
+          <h3>📤 Exportar Rutina</h3>
+          <span id="export-routine-target-title" class="text-dim"></span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-export">✕</button>
+      </div>
+
+      <div class="export-options-grid">
+        <div class="export-option-card" id="btn-export-as-pdf">
+          <div class="export-opt-icon">📄</div>
+          <div class="export-opt-info">
+            <strong>Ficha PDF Imprimible</strong>
+            <p>Genera una ficha profesional con la marca JPEREZCOACH lista para imprimir o guardar como PDF en tu móvil.</p>
+          </div>
+          <button class="btn btn-primary btn-sm">Generar PDF ➔</button>
+        </div>
+
+        <div class="export-option-card" id="btn-export-as-wa">
+          <div class="export-opt-icon">📱</div>
+          <div class="export-opt-info">
+            <strong>Texto Formateado para WhatsApp</strong>
+            <p>Copia el plan con emojis y directrices para enviarlo por WhatsApp a tu atleta o entrenador.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm">Copiar Texto</button>
+        </div>
+
+        <div class="export-option-card" id="btn-export-as-json">
+          <div class="export-opt-icon">💾</div>
+          <div class="export-opt-info">
+            <strong>Archivo JSON de Backup</strong>
+            <p>Descarga el archivo estructurado para importarlo en otro móvil o conservarlo como copia de seguridad.</p>
+          </div>
+          <button class="btn btn-outline-sm">Descargar JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ENTRENAMIENTO EN VIVO A PANTALLA COMPLETA (ACTIVE WORKOUT)
        ========================================================================= -->
   <div id="modal-active-workout" class="fullscreen-modal">
     <div class="fullscreen-modal-header">
@@ -493,7 +718,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 2: SELECTOR DE EJERCICIOS (EXERCISE PICKER)
+       MODAL: SELECTOR DE EJERCICIOS (EXERCISE PICKER)
        ========================================================================= -->
   <div id="modal-exercise-picker" class="modal-dialog-overlay">
     <div class="modal-dialog-content">
@@ -522,7 +747,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 3: CREADOR Y EDITOR DE RUTINAS (ROUTINE BUILDER)
+       MODAL: CREADOR Y EDITOR DE RUTINAS (ROUTINE BUILDER)
        ========================================================================= -->
   <div id="modal-routine-builder" class="fullscreen-modal">
     <div class="fullscreen-modal-header">
@@ -566,7 +791,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 4: VISTA PREVIA DE RUTINA
+       MODAL: VISTA PREVIA DE RUTINA
        ========================================================================= -->
   <div id="modal-routine-preview" class="modal-dialog-overlay">
     <div class="modal-dialog-content">
@@ -579,6 +804,7 @@
         <!-- Renderizado dinámicamente -->
       </div>
       <div class="modal-dialog-footer">
+        <button class="btn btn-outline" id="btn-preview-export-routine">📤 Exportar</button>
         <button class="btn btn-primary btn-block btn-large" id="btn-preview-start-routine">
           ▶ Iniciar Este Entrenamiento Ahora
         </button>
@@ -587,7 +813,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 5: REPRODUCTOR DE VÍDEOS DE TÉCNICA
+       MODAL: REPRODUCTOR DE VÍDEOS DE TÉCNICA
        ========================================================================= -->
   <div id="modal-video-player" class="modal-dialog-overlay">
     <div class="modal-dialog-content video-dialog-content">
@@ -609,7 +835,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 6: RESUMEN Y CELEBRACIÓN DE FIN DE ENTRENAMIENTO
+       MODAL: RESUMEN Y CELEBRACIÓN DE FIN DE ENTRENAMIENTO
        ========================================================================= -->
   <div id="modal-workout-summary" class="modal-dialog-overlay">
     <div class="modal-dialog-content summary-dialog-content">
@@ -656,7 +882,7 @@
   </div>
 
   <!-- =========================================================================
-       MODAL 7: AUTENTICACIÓN / CAMBIO DE CUENTA (LOGIN & DEMO SWITCH)
+       MODAL: AUTENTICACIÓN / CAMBIO DE CUENTA (LOGIN & DEMO SWITCH)
        ========================================================================= -->
   <div id="modal-auth" class="modal-dialog-overlay">
     <div class="modal-dialog-content auth-dialog-content">
@@ -727,317 +953,19 @@
   <!-- =========================================================================
        SCRIPTS DE LA APLICACIÓN
        ========================================================================= -->
+  <!-- Librería PDF.js para lectura de documentos en el navegador -->
+  <script src="lib/pdf.min.js"></script>
+
+  <!-- Módulos de la Aplicación -->
   <script src="js/state.js"></script>
   <script src="js/db-ejercicios.js"></script>
   <script src="js/rutinas-oficiales.js"></script>
+  <script src="js/pdf-importer.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/workout-engine.js"></script>
   <script src="js/routine-builder.js"></script>
   <script src="js/chat-engine.js"></script>
   <script src="js/analytics.js"></script>
   <script src="js/app.js"></script>
-
-  <!-- Script de enlaces y enlaces de modales adicionales -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Apertura de modales
-      var btnStartEmpty = document.getElementById('btn-start-empty-workout');
-      if (btnStartEmpty) {
-        btnStartEmpty.addEventListener('click', function() {
-          WorkoutEngine.startEmptyWorkout();
-        });
-      }
-
-      var btnHeroNewRoutine = document.getElementById('btn-hero-new-routine');
-      if (btnHeroNewRoutine) {
-        btnHeroNewRoutine.addEventListener('click', function() {
-          App.openRoutineBuilder(null);
-        });
-      }
-
-      var btnMinimize = document.getElementById('btn-minimize-active-workout');
-      if (btnMinimize) {
-        btnMinimize.addEventListener('click', function() {
-          App.hideActiveWorkoutModal();
-          App.updateStickyWorkoutBar();
-        });
-      }
-
-      var btnFinish = document.getElementById('btn-finish-workout');
-      if (btnFinish) {
-        btnFinish.addEventListener('click', function() {
-          if (confirm('¿Deseas finalizar y guardar este entrenamiento?')) {
-            WorkoutEngine.finishWorkout();
-          }
-        });
-      }
-
-      var btnDiscard = document.getElementById('btn-discard-workout');
-      if (btnDiscard) {
-        btnDiscard.addEventListener('click', function() {
-          if (confirm('¿Estás seguro de descartar este entrenamiento? Las series registradas no se guardarán.')) {
-            WorkoutEngine.discardWorkout();
-          }
-        });
-      }
-
-      var btnAddExActive = document.getElementById('btn-add-exercise-to-active');
-      if (btnAddExActive) {
-        btnAddExActive.addEventListener('click', function() {
-          App.openExercisePicker(function(exerciseId) {
-            WorkoutEngine.addExerciseToWorkout(exerciseId);
-          });
-        });
-      }
-
-      var btnClosePicker = document.getElementById('btn-close-picker');
-      if (btnClosePicker) {
-        btnClosePicker.addEventListener('click', function() {
-          App.closeExercisePicker();
-        });
-      }
-
-      var searchInput = document.getElementById('picker-search-input');
-      if (searchInput) {
-        searchInput.addEventListener('input', function() {
-          App.renderExercisePickerList();
-        });
-      }
-
-      var muscleChips = document.querySelectorAll('#picker-muscle-chips .chip');
-      muscleChips.forEach(function(chip) {
-        chip.addEventListener('click', function() {
-          muscleChips.forEach(function(c) { c.classList.remove('active'); });
-          this.classList.add('active');
-          App.selectedFilterGroup = this.getAttribute('data-group');
-          App.renderExercisePickerList();
-        });
-      });
-
-      // Modales de rutinas
-      var btnCloseBuilder = document.getElementById('btn-close-builder');
-      if (btnCloseBuilder) {
-        btnCloseBuilder.addEventListener('click', function() {
-          if (confirm('¿Cerrar constructor de rutina?')) {
-            App.closeRoutineBuilder();
-          }
-        });
-      }
-
-      var btnSaveDraft = document.getElementById('btn-save-routine-draft');
-      if (btnSaveDraft) {
-        btnSaveDraft.addEventListener('click', function() {
-          var titleIn = document.getElementById('builder-routine-title');
-          var descIn = document.getElementById('builder-routine-desc');
-          var catIn = document.getElementById('builder-routine-category');
-
-          if (RoutineBuilder.currentDraft) {
-            if (titleIn) RoutineBuilder.currentDraft.titulo = titleIn.value;
-            if (descIn) RoutineBuilder.currentDraft.descripcion = descIn.value;
-            if (catIn) RoutineBuilder.currentDraft.categoria = catIn.value;
-          }
-
-          var res = RoutineBuilder.saveCurrentDraft();
-          if (res.success) {
-            App.closeRoutineBuilder();
-            App.showToast('¡Rutina guardada correctamente!');
-            App.renderWorkoutTab();
-            App.renderRoutinesTab();
-          } else {
-            alert(res.message);
-          }
-        });
-      }
-
-      var btnClosePreview = document.getElementById('btn-close-preview');
-      if (btnClosePreview) {
-        btnClosePreview.addEventListener('click', function() {
-          document.getElementById('modal-routine-preview').classList.remove('open');
-        });
-      }
-
-      var btnCloseVideo = document.getElementById('btn-close-video');
-      if (btnCloseVideo) {
-        btnCloseVideo.addEventListener('click', function() {
-          App.closeVideoModal();
-        });
-      }
-
-      var btnCloseSummary = document.getElementById('btn-close-summary');
-      if (btnCloseSummary) {
-        btnCloseSummary.addEventListener('click', function() {
-          document.getElementById('modal-workout-summary').classList.remove('open');
-          App.switchTab('tab-history');
-        });
-      }
-
-      // Temporizador de descanso controles
-      var btnRestPlus30 = document.getElementById('btn-rest-plus-30');
-      if (btnRestPlus30) {
-        btnRestPlus30.addEventListener('click', function() {
-          WorkoutEngine.addRestTime(30);
-        });
-      }
-
-      var btnRestMinus15 = document.getElementById('btn-rest-minus-15');
-      if (btnRestMinus15) {
-        btnRestMinus15.addEventListener('click', function() {
-          WorkoutEngine.addRestTime(-15);
-        });
-      }
-
-      var btnRestSkip = document.getElementById('btn-rest-skip');
-      if (btnRestSkip) {
-        btnRestSkip.addEventListener('click', function() {
-          WorkoutEngine.skipRestTimer();
-        });
-      }
-
-      // Chat handlers
-      var chatChannelBtns = document.querySelectorAll('.chat-channel-btn');
-      chatChannelBtns.forEach(function(b) {
-        b.addEventListener('click', function() {
-          var ch = this.getAttribute('data-channel');
-          ChatEngine.setChannel(ch);
-          App.renderChatTab();
-        });
-      });
-
-      var chatForm = document.getElementById('chat-send-form');
-      var chatInput = document.getElementById('chat-text-input');
-      if (chatForm && chatInput) {
-        chatForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          var txt = chatInput.value;
-          if (txt && txt.trim()) {
-            ChatEngine.sendMessage(txt);
-            chatInput.value = '';
-          }
-        });
-      }
-
-      var btnShareChat = document.getElementById('btn-share-last-workout-chat');
-      if (btnShareChat) {
-        btnShareChat.addEventListener('click', function() {
-          ChatEngine.shareLastWorkout(ChatEngine.currentChannel);
-        });
-      }
-
-      var btnWa = document.getElementById('btn-open-whatsapp');
-      if (btnWa) {
-        btnWa.addEventListener('click', function() {
-          var url = ChatEngine.getWhatsAppUrl();
-          window.open(url, '_blank');
-        });
-      }
-
-      // Quick prompt chips
-      document.querySelectorAll('.prompt-chip').forEach(function(chip) {
-        chip.addEventListener('click', function() {
-          var prompt = this.getAttribute('data-prompt');
-          ChatEngine.sendMessage(prompt, 'coach');
-          ChatEngine.setChannel('coach');
-          App.renderChatTab();
-        });
-      });
-
-      // Herramientas Gym handlers
-      var plateTarget = document.getElementById('plate-calc-target');
-      var plateBar = document.getElementById('plate-calc-bar');
-      function updatePlates() {
-        if (plateTarget && plateBar) {
-          App.calculateAndRenderPlates(plateTarget.value, plateBar.value);
-        }
-      }
-      if (plateTarget) plateTarget.addEventListener('input', updatePlates);
-      if (plateBar) plateBar.addEventListener('change', updatePlates);
-      updatePlates();
-
-      var calc1rmWeight = document.getElementById('calc-1rm-weight');
-      var calc1rmReps = document.getElementById('calc-1rm-reps');
-      function update1RM() {
-        if (calc1rmWeight && calc1rmReps) {
-          App.calculateAndRender1RM(calc1rmWeight.value, calc1rmReps.value);
-        }
-      }
-      if (calc1rmWeight) calc1rmWeight.addEventListener('input', update1RM);
-      if (calc1rmReps) calc1rmReps.addEventListener('input', update1RM);
-      update1RM();
-
-      // Exportar / Importar
-      var btnExport = document.getElementById('btn-export-data');
-      if (btnExport) {
-        btnExport.addEventListener('click', function() {
-          var json = AppState.exportAllData();
-          var blob = new Blob([json], { type: 'application/json' });
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = 'jperezcoach_backup_' + new Date().toISOString().split('T')[0] + '.json';
-          a.click();
-          URL.revokeObjectURL(url);
-          App.showToast('Copia de seguridad descargada.');
-        });
-      }
-
-      var fileImport = document.getElementById('file-import-data');
-      if (fileImport) {
-        fileImport.addEventListener('change', function(e) {
-          var file = e.target.files[0];
-          if (!file) return;
-          var reader = new FileReader();
-          reader.onload = function(evt) {
-            var ok = AppState.importAllData(evt.target.result);
-            if (!ok) alert('El archivo no tiene un formato válido.');
-          };
-          reader.readAsText(file);
-        });
-      }
-
-      // Auth modal
-      var btnHeaderProfile = document.getElementById('btn-header-profile');
-      var btnOpenAuth = document.getElementById('btn-open-auth-modal');
-      var modalAuth = document.getElementById('modal-auth');
-      var btnCloseAuth = document.getElementById('btn-close-auth');
-
-      function openAuth() { if (modalAuth) modalAuth.classList.add('open'); }
-      function closeAuth() { if (modalAuth) modalAuth.classList.remove('open'); }
-
-      if (btnHeaderProfile) btnHeaderProfile.addEventListener('click', openAuth);
-      if (btnOpenAuth) btnOpenAuth.addEventListener('click', openAuth);
-      if (btnCloseAuth) btnCloseAuth.addEventListener('click', closeAuth);
-
-      // Demo accounts fast switch
-      document.querySelectorAll('.demo-user-card').forEach(function(card) {
-        card.addEventListener('click', function() {
-          var uId = this.getAttribute('data-user-id');
-          AuthService.switchAccount(uId);
-          document.querySelectorAll('.demo-user-card').forEach(function(c) { c.classList.remove('active'); });
-          this.classList.add('active');
-          closeAuth();
-          App.showToast('Sesión cambiada a: ' + (AppState.currentUser ? AppState.currentUser.name : ''));
-        });
-      });
-
-      var registerForm = document.getElementById('auth-register-form');
-      if (registerForm) {
-        registerForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          var name = document.getElementById('reg-name').value;
-          var email = document.getElementById('reg-email').value;
-          var weight = document.getElementById('reg-weight').value;
-          var height = document.getElementById('reg-height').value;
-
-          var res = AuthService.register({ name: name, email: email, weight: weight, height: height });
-          if (res.success) {
-            closeAuth();
-            App.showToast('¡Bienvenido, ' + res.user.name + '!');
-          } else {
-            alert(res.message);
-          }
-        });
-      }
-    });
-  </script>
 </body>
 </html>

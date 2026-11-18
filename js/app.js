@@ -1,6 +1,6 @@
 // =============================================================================
 // JPEREZCOACH APP · CONTROLADOR PRINCIPAL Y GESTOR DE INTERFAZ DE USUARIO
-// Navegación de pestañas, modales, renderizado reactivo y experiencia Hevy
+// Navegación, Rutinas Dinámicas, Importador de PDF, Exportador y Experiencia Hevy
 // =============================================================================
 
 (function(global) {
@@ -66,10 +66,13 @@
     selectedEquipment: 'todos',
     exercisePickerCallback: null,
     videoModalExercise: null,
+    exportTargetRoutineId: null,
+    parsedImportResult: null,
 
     init: function() {
       this.bindEvents();
       this.initTabs();
+      this.initPDFImporterEvents();
       this.renderAll();
       this.initServiceWorker();
       return this;
@@ -149,6 +152,21 @@
           self.showActiveWorkoutModal();
         });
       }
+
+      // Botones de subida de PDF en cabecera y hero
+      var btnHeaderUpload = document.getElementById('btn-header-upload-pdf');
+      if (btnHeaderUpload) {
+        btnHeaderUpload.addEventListener('click', function() {
+          self.openPDFImporterModal();
+        });
+      }
+
+      var btnHeroUpload = document.getElementById('btn-hero-upload-pdf');
+      if (btnHeroUpload) {
+        btnHeroUpload.addEventListener('click', function() {
+          self.openPDFImporterModal();
+        });
+      }
     },
 
     initTabs: function() {
@@ -166,17 +184,14 @@
     switchTab: function(tabId) {
       this.activeTab = tabId;
 
-      // Actualizar botones de navegación
       document.querySelectorAll('.nav-tab-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
       });
 
-      // Actualizar vistas
       document.querySelectorAll('.view-screen').forEach(function(screen) {
         screen.classList.toggle('active', screen.id === tabId);
       });
 
-      // Refrescar datos específicos de la vista
       if (tabId === 'tab-workout') this.renderWorkoutTab();
       else if (tabId === 'tab-routines') this.renderRoutinesTab();
       else if (tabId === 'tab-chat') this.renderChatTab();
@@ -225,27 +240,46 @@
       var container = document.getElementById('routines-list-container');
       if (!container) return;
 
-      var oficiales = global.RutinasMaestras ? global.RutinasMaestras.getOficiales() : [];
-      var personalizadas = global.RutinasMaestras ? global.RutinasMaestras.getPersonalizadas() : [];
-
+      var rutinas = global.RutinasMaestras ? global.RutinasMaestras.getAll() : [];
       var html = '';
 
-      // Sección Rutinas Personalizadas si hay
-      if (personalizadas.length > 0) {
-        html += '<div class="section-title-wrap"><h3 class="section-heading">Tus Rutinas Creadas</h3><span class="count-pill">' + personalizadas.length + '</span></div>';
-        html += '<div class="routines-grid">';
-        personalizadas.forEach(function(r) {
-          html += App.generateRoutineCardHTML(r, true);
-        });
-        html += '</div>';
+      if (rutinas.length === 0) {
+        html = '<div class="empty-state-card">' +
+          '<div class="empty-icon">📋</div>' +
+          '<h4>No tienes ninguna rutina cargada</h4>' +
+          '<p>Sube tu rutina en PDF, crea una nueva desde cero o restaura el plan de Jose Perez.</p>' +
+          '<div class="empty-actions-row">' +
+            '<button class="btn btn-primary" id="btn-empty-upload-pdf">📄 Subir Rutina en PDF</button>' +
+            '<button class="btn btn-secondary" id="btn-empty-new-routine">➕ Crear Rutina Manual</button>' +
+            '<button class="btn btn-outline" id="btn-empty-restore-default">🔄 Restaurar Plan de Jose Perez (6 Días)</button>' +
+          '</div>' +
+        '</div>';
+        container.innerHTML = html;
+
+        var self = this;
+        var btnEmptyPdf = document.getElementById('btn-empty-upload-pdf');
+        if (btnEmptyPdf) btnEmptyPdf.onclick = function() { self.openPDFImporterModal(); };
+
+        var btnEmptyNew = document.getElementById('btn-empty-new-routine');
+        if (btnEmptyNew) btnEmptyNew.onclick = function() { self.openRoutineBuilder(null); };
+
+        var btnEmptyRes = document.getElementById('btn-empty-restore-default');
+        if (btnEmptyRes) btnEmptyRes.onclick = function() {
+          global.RutinasMaestras.restaurarOficiales();
+          self.showToast('Plan oficial de 6 días restaurado.');
+        };
+        return;
       }
 
-      // Sección Rotación Oficial Jose Perez
-      html += '<div class="section-title-wrap" style="margin-top: 1.5rem;"><h3 class="section-heading">Rotación Oficial JPEREZCOACH (6 Días)</h3><span class="count-pill official-pill">Oficial</span></div>';
-      html += '<p class="section-subtitle">Entrena a tu ritmo: completa la secuencia en orden sin atarte a días fijos.</p>';
+      html += '<div class="section-title-wrap">' +
+        '<h3 class="section-heading">Tus Rutinas Disponibles</h3>' +
+        '<span class="count-pill">' + rutinas.length + ' rutinas</span>' +
+      '</div>';
+      html += '<p class="section-subtitle">Puedes iniciar cualquier sesión, editarla, borrarla o exportarla en PDF/JSON.</p>';
+
       html += '<div class="routines-grid">';
-      oficiales.forEach(function(r) {
-        html += App.generateRoutineCardHTML(r, false);
+      rutinas.forEach(function(r) {
+        html += App.generateRoutineCardHTML(r);
       });
       html += '</div>';
 
@@ -253,7 +287,7 @@
       this.bindRoutineCardEvents(container);
     },
 
-    generateRoutineCardHTML: function(routine, isCustom) {
+    generateRoutineCardHTML: function(routine) {
       var numEjercicios = routine.ejercicios ? routine.ejercicios.length : 0;
       var focos = (routine.foco || []).join(' · ');
       var borderAccent = routine.color || '#38bdf8';
@@ -264,7 +298,11 @@
             '<span class="routine-tag" style="background: ' + borderAccent + '22; color: ' + borderAccent + ';">' + (routine.etiqueta || 'RUTINA') + '</span>' +
             '<span class="routine-duration">⏱️ ~' + (routine.tiempoEstimadoMin || 60) + ' min</span>' +
           '</div>' +
-          (isCustom ? '<button class="btn-icon-subtle btn-delete-routine" data-id="' + routine.id + '" title="Eliminar rutina">🗑️</button>' : '') +
+          '<div class="routine-top-actions">' +
+            '<button class="btn-icon-subtle btn-export-routine-trigger" data-id="' + routine.id + '" title="Exportar rutina (PDF, JSON o WhatsApp)">📤</button>' +
+            '<button class="btn-icon-subtle btn-edit-routine" data-id="' + routine.id + '" title="Editar rutina">✏️</button>' +
+            '<button class="btn-icon-subtle btn-delete-routine" data-id="' + routine.id + '" title="Eliminar rutina">🗑️</button>' +
+          '</div>' +
         '</div>' +
         '<h4 class="routine-title">' + routine.titulo + '</h4>' +
         '<p class="routine-description">' + (routine.descripcion || focos) + '</p>' +
@@ -301,12 +339,30 @@
         });
       });
 
+      container.querySelectorAll('.btn-edit-routine').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var id = this.getAttribute('data-id');
+          self.openRoutineBuilder(id);
+        });
+      });
+
+      container.querySelectorAll('.btn-export-routine-trigger').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var id = this.getAttribute('data-id');
+          self.openExportRoutineModal(id);
+        });
+      });
+
       container.querySelectorAll('.btn-delete-routine').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
           var id = this.getAttribute('data-id');
-          if (confirm('¿Estás seguro de que deseas eliminar esta rutina?')) {
-            global.RoutineBuilder.deleteRoutine(id);
+          var r = global.RutinasMaestras.getById(id);
+          var nombre = r ? r.titulo : 'esta rutina';
+          if (confirm('¿Eliminar "' + nombre + '" de tu lista de rutinas?')) {
+            global.RutinasMaestras.borrarRutina(id);
             self.showToast('Rutina eliminada.');
           }
         });
@@ -314,7 +370,378 @@
     },
 
     // =========================================================================
-    // 2. MODAL Y MOTOR DE ENTRENAMIENTO EN VIVO (HEVY ACTIVE WORKOUT)
+    // 2. PESTAÑA RUTINAS (ROUTINES HUB)
+    // =========================================================================
+    renderRoutinesTab: function() {
+      var container = document.getElementById('routines-tab-container');
+      if (!container) return;
+
+      var rutinas = global.RutinasMaestras ? global.RutinasMaestras.getAll() : [];
+
+      var html = '<div class="routines-tab-header">' +
+        '<div class="tab-header-titles">' +
+          '<h3>Gestor y Creador de Rutinas</h3>' +
+          '<p>Sube tu PDF, diseña entrenamientos o adapta el sistema de Jose Perez.</p>' +
+        '</div>' +
+        '<div class="routines-header-btns">' +
+          '<button class="btn btn-secondary btn-sm" id="btn-tab-upload-pdf">📄 Subir Rutina en PDF</button>' +
+          '<button class="btn btn-primary btn-sm btn-trigger-new-routine">+ Nueva Rutina Manual</button>' +
+        '</div>' +
+      '</div>';
+
+      // Barra de utilidades: Restaurar oficiales / Borrar todo / Guía
+      html += '<div class="routines-toolbar-banner">' +
+        '<button class="btn-toolbar-link" id="btn-open-guide-from-tab">📖 Ver Guía de Formato PDF</button>' +
+        '<span class="toolbar-sep">·</span>' +
+        '<button class="btn-toolbar-link" id="btn-restore-default-plan">🔄 Restaurar 6 Días Oficiales</button>' +
+        '<span class="toolbar-sep">·</span>' +
+        '<button class="btn-toolbar-link text-danger" id="btn-clear-all-routines">🗑️ Borrar Todo</button>' +
+      '</div>';
+
+      if (rutinas.length === 0) {
+        html += '<div class="empty-state-card">' +
+          '<div class="empty-icon">📋</div>' +
+          '<h4>Tu biblioteca de rutinas está vacía</h4>' +
+          '<p>Sube tu PDF o pulsa en "+ Nueva Rutina Manual" para crear tu plan personalizado.</p>' +
+        '</div>';
+      } else {
+        html += '<div class="routines-grid">';
+        rutinas.forEach(function(r) {
+          html += App.generateRoutineCardHTML(r);
+        });
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+      this.bindRoutineCardEvents(container);
+
+      var self = this;
+      var btnUploadPdf = document.getElementById('btn-tab-upload-pdf');
+      if (btnUploadPdf) btnUploadPdf.onclick = function() { self.openPDFImporterModal(); };
+
+      var btnNewRoutine = container.querySelector('.btn-trigger-new-routine');
+      if (btnNewRoutine) btnNewRoutine.onclick = function() { self.openRoutineBuilder(null); };
+
+      var btnOpenGuide = document.getElementById('btn-open-guide-from-tab');
+      if (btnOpenGuide) btnOpenGuide.onclick = function() { self.openFormatGuideModal(); };
+
+      var btnRestore = document.getElementById('btn-restore-default-plan');
+      if (btnRestore) {
+        btnRestore.onclick = function() {
+          if (confirm('¿Restaurar el plan original de 6 días de Jose Perez?')) {
+            global.RutinasMaestras.restaurarOficiales();
+            self.showToast('Plan de 6 días restaurado.');
+          }
+        };
+      }
+
+      var btnClearAll = document.getElementById('btn-clear-all-routines');
+      if (btnClearAll) {
+        btnClearAll.onclick = function() {
+          if (confirm('¿Eliminar TODAS las rutinas para empezar completamente en blanco?')) {
+            global.RutinasMaestras.borrarTodas();
+            self.showToast('Todas las rutinas han sido eliminadas.');
+          }
+        };
+      }
+    },
+
+    // =========================================================================
+    // 3. IMPORTADOR DE RUTINAS EN PDF Y TEXTO (PDF IMPORTER)
+    // =========================================================================
+    initPDFImporterEvents: function() {
+      var self = this;
+      var modal = document.getElementById('modal-pdf-importer');
+      var dropzone = document.getElementById('pdf-dropzone');
+      var fileInput = document.getElementById('pdf-file-input');
+      var btnBrowse = document.getElementById('btn-browse-pdf');
+      var selectedLabel = document.getElementById('selected-pdf-name');
+      var btnClose = document.getElementById('btn-close-pdf-importer');
+      var btnCancel = document.getElementById('btn-cancel-pdf-import');
+      var btnProcess = document.getElementById('btn-process-import');
+      var btnOpenGuide = document.getElementById('btn-open-format-guide');
+
+      var selectedFile = null;
+
+      function closeModal() {
+        if (modal) modal.classList.remove('open');
+        selectedFile = null;
+        if (selectedLabel) selectedLabel.textContent = '';
+      }
+
+      if (btnClose) btnClose.onclick = closeModal;
+      if (btnCancel) btnCancel.onclick = closeModal;
+
+      if (btnBrowse && fileInput) {
+        btnBrowse.onclick = function(e) {
+          e.preventDefault();
+          fileInput.click();
+        };
+      }
+
+      if (fileInput) {
+        fileInput.onchange = function(e) {
+          if (e.target.files && e.target.files[0]) {
+            selectedFile = e.target.files[0];
+            if (selectedLabel) selectedLabel.textContent = '📄 ' + selectedFile.name + ' (' + Math.round(selectedFile.size / 1024) + ' KB)';
+          }
+        };
+      }
+
+      // Drag & Drop
+      if (dropzone) {
+        ['dragenter', 'dragover'].forEach(function(eventName) {
+          dropzone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dragover');
+          }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(function(eventName) {
+          dropzone.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+          }, false);
+        });
+
+        dropzone.addEventListener('drop', function(e) {
+          var dt = e.dataTransfer;
+          var files = dt.files;
+          if (files && files[0]) {
+            selectedFile = files[0];
+            if (selectedLabel) selectedLabel.textContent = '📄 ' + selectedFile.name + ' (' + Math.round(selectedFile.size / 1024) + ' KB)';
+          }
+        }, false);
+      }
+
+      // Tabs entre Archivo PDF y Pegar Texto
+      var importTabs = document.querySelectorAll('.import-tab-btn');
+      importTabs.forEach(function(tab) {
+        tab.onclick = function() {
+          importTabs.forEach(function(t) { t.classList.remove('active'); });
+          this.classList.add('active');
+
+          var targetId = this.getAttribute('data-target');
+          document.querySelectorAll('.import-tab-panel').forEach(function(p) {
+            p.classList.toggle('active', p.id === targetId);
+          });
+        };
+      });
+
+      // Procesar importación
+      if (btnProcess) {
+        btnProcess.onclick = async function() {
+          var activeTab = document.querySelector('.import-tab-btn.active');
+          var isPdfTab = activeTab && activeTab.getAttribute('data-target') === 'panel-pdf-file';
+
+          try {
+            self.showToast('Analizando estructura del documento...');
+            var result = null;
+
+            if (isPdfTab) {
+              if (!selectedFile) {
+                alert('Por favor selecciona o arrastra un archivo PDF primero.');
+                return;
+              }
+              result = await global.PDFImporter.parsePDFFile(selectedFile);
+            } else {
+              var textIn = document.getElementById('plain-text-input');
+              var txt = textIn ? textIn.value : '';
+              if (!txt || !txt.trim()) {
+                alert('Por favor pega el texto de tu rutina primero.');
+                return;
+              }
+              result = global.PDFImporter.parsePlainText(txt);
+            }
+
+            if (!result || !result.dias || result.dias.length === 0) {
+              alert('No se pudieron detectar días ni ejercicios. Revisa la Guía de Formato.');
+              return;
+            }
+
+            closeModal();
+            self.showPDFPreviewModal(result);
+          } catch (err) {
+            alert('Error al analizar la rutina: ' + err.message);
+          }
+        };
+      }
+
+      if (btnOpenGuide) {
+        btnOpenGuide.onclick = function() {
+          self.openFormatGuideModal();
+        };
+      }
+    },
+
+    openPDFImporterModal: function() {
+      var modal = document.getElementById('modal-pdf-importer');
+      if (modal) modal.classList.add('open');
+    },
+
+    showPDFPreviewModal: function(parsedResult) {
+      this.parsedImportResult = parsedResult;
+      var modal = document.getElementById('modal-pdf-preview');
+      if (!modal) return;
+
+      var titleEl = document.getElementById('pdf-preview-plan-title');
+      var metaEl = document.getElementById('pdf-preview-meta');
+      var bodyEl = document.getElementById('pdf-preview-body');
+
+      if (titleEl) titleEl.textContent = parsedResult.tituloPlan || 'Rutina Analizada';
+      if (metaEl) metaEl.textContent = (parsedResult.atleta ? 'Atleta: ' + parsedResult.atleta + ' · ' : '') + parsedResult.totalDias + ' día(s) detectado(s)';
+
+      var html = '';
+      parsedResult.dias.forEach(function(dia, dIdx) {
+        html += '<div class="preview-import-day-card">' +
+          '<div class="day-card-header">' +
+            '<h4>' + dia.titulo + '</h4>' +
+            '<span class="badge-role">' + dia.ejercicios.length + ' ejercicios</span>' +
+          '</div>' +
+          '<div class="day-exercises-table">';
+
+        dia.ejercicios.forEach(function(ex, eIdx) {
+          var matchedPill = ex.matchedId ? '<span class="pill-matched" title="Vinculado al catálogo oficial">🎬 Vídeo Verificado</span>' : '<span class="pill-unmatched">Nuevo Ejercicio</span>';
+
+          html += '<div class="import-ex-row">' +
+            '<div class="import-ex-info">' +
+              '<strong>' + (eIdx + 1) + '. ' + ex.name + '</strong>' +
+              (ex.notes ? '<p class="import-ex-notes">🎯 ' + ex.notes + '</p>' : '') +
+            '</div>' +
+            '<div class="import-ex-meta">' +
+              '<span>' + (ex.defaultSets ? ex.defaultSets.length : 3) + ' series × ' + ex.targetReps + '</span>' +
+              matchedPill +
+            '</div>' +
+          '</div>';
+        });
+
+        html += '</div></div>';
+      });
+
+      if (bodyEl) bodyEl.innerHTML = html;
+
+      var self = this;
+      var btnConfirm = document.getElementById('btn-confirm-import-routine');
+      if (btnConfirm) {
+        btnConfirm.onclick = function() {
+          parsedResult.dias.forEach(function(dia) {
+            dia.esOficial = false;
+            dia.categoria = 'Rutinas Importadas';
+            global.AppState.addRoutine(dia);
+          });
+
+          modal.classList.remove('open');
+          self.showToast('¡' + parsedResult.totalDias + ' rutina(s) guardadas en tu aplicación!');
+          self.renderWorkoutTab();
+          self.renderRoutinesTab();
+        };
+      }
+
+      var btnClose = document.getElementById('btn-close-pdf-preview');
+      var btnBack = document.getElementById('btn-back-to-import');
+      function closePreview() { modal.classList.remove('open'); }
+      if (btnClose) btnClose.onclick = closePreview;
+      if (btnBack) {
+        btnBack.onclick = function() {
+          closePreview();
+          self.openPDFImporterModal();
+        };
+      }
+
+      modal.classList.add('open');
+    },
+
+    openFormatGuideModal: function() {
+      var modal = document.getElementById('modal-format-guide');
+      if (!modal) return;
+
+      var self = this;
+      var btnClose = document.getElementById('btn-close-format-guide');
+      var btnClose2 = document.getElementById('btn-close-format-guide-btn');
+      var btnCopy = document.getElementById('btn-copy-sample-template');
+      var btnUse = document.getElementById('btn-use-sample-in-importer');
+
+      function closeGuide() { modal.classList.remove('open'); }
+      if (btnClose) btnClose.onclick = closeGuide;
+      if (btnClose2) btnClose2.onclick = closeGuide;
+
+      if (btnCopy) {
+        btnCopy.onclick = function() {
+          var sampleText = document.getElementById('sample-template-text').textContent;
+          navigator.clipboard.writeText(sampleText).then(function() {
+            self.showToast('Plantilla de ejemplo copiada al portapapeles.');
+          });
+        };
+      }
+
+      if (btnUse) {
+        btnUse.onclick = function() {
+          var sampleText = document.getElementById('sample-template-text').textContent;
+          closeGuide();
+          self.openPDFImporterModal();
+
+          // Activar pestaña de texto plano y pegar ejemplo
+          var plainTab = document.querySelector('.import-tab-btn[data-target="panel-plain-text"]');
+          if (plainTab) plainTab.click();
+          var txtArea = document.getElementById('plain-text-input');
+          if (txtArea) txtArea.value = sampleText;
+        };
+      }
+
+      modal.classList.add('open');
+    },
+
+    // =========================================================================
+    // 4. EXPORTACIÓN DE RUTINAS (MODAL EXPORT)
+    // =========================================================================
+    openExportRoutineModal: function(routineId) {
+      this.exportTargetRoutineId = routineId;
+      var modal = document.getElementById('modal-export-routine');
+      if (!modal) return;
+
+      var r = global.RutinasMaestras.getById(routineId);
+      var titleEl = document.getElementById('export-routine-target-title');
+      if (titleEl && r) titleEl.textContent = r.titulo;
+
+      var self = this;
+      var btnClose = document.getElementById('btn-close-export');
+      if (btnClose) btnClose.onclick = function() { modal.classList.remove('open'); };
+
+      var btnPdf = document.getElementById('btn-export-as-pdf');
+      if (btnPdf) {
+        btnPdf.onclick = function() {
+          global.RutinasMaestras.exportarAPDFImprimible(self.exportTargetRoutineId);
+          modal.classList.remove('open');
+        };
+      }
+
+      var btnWa = document.getElementById('btn-export-as-wa');
+      if (btnWa) {
+        btnWa.onclick = function() {
+          var text = global.RutinasMaestras.exportarAWhatsApp(self.exportTargetRoutineId);
+          navigator.clipboard.writeText(text).then(function() {
+            self.showToast('¡Texto copiado para WhatsApp! Pégalo en tu chat.');
+            modal.classList.remove('open');
+          });
+        };
+      }
+
+      var btnJson = document.getElementById('btn-export-as-json');
+      if (btnJson) {
+        btnJson.onclick = function() {
+          global.RutinasMaestras.exportarAJSON(self.exportTargetRoutineId);
+          self.showToast('Archivo JSON descargado.');
+          modal.classList.remove('open');
+        };
+      }
+
+      modal.classList.add('open');
+    },
+
+    // =========================================================================
+    // 5. MODAL DE ENTRENO EN VIVO (ACTIVE WORKOUT)
     // =========================================================================
     showActiveWorkoutModal: function() {
       var modal = document.getElementById('modal-active-workout');
@@ -385,7 +812,6 @@
         };
       }
 
-      // Calcular volumen actual
       var currentVol = 0;
       active.exercises.forEach(function(ex) {
         if (ex.sets) {
@@ -398,7 +824,6 @@
       });
       if (volumeEl) volumeEl.textContent = Math.round(currentVol) + ' kg';
 
-      // Renderizar ejercicios
       var html = '';
       if (active.exercises.length === 0) {
         html = '<div class="empty-state-card">' +
@@ -434,7 +859,6 @@
         html += '<div class="exercise-coach-note">💡 ' + ex.notes + '</div>';
       }
 
-      // Tabla de series estilo Hevy
       html += '<div class="sets-table-wrap">' +
         '<table class="sets-table">' +
           '<thead>' +
@@ -460,7 +884,7 @@
 
         html += '<tr class="set-row ' + completedClass + '" data-set-index="' + sIdx + '">' +
           '<td>' +
-            '<button class="set-type-btn ' + badgeClass + '" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '" title="Cambiar tipo de serie (Normal / Calentamiento / Drop / Fallo)">' + setTypeBadge + '</button>' +
+            '<button class="set-type-btn ' + badgeClass + '" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '" title="Cambiar tipo de serie">' + setTypeBadge + '</button>' +
           '</td>' +
           '<td class="prev-value-cell">' + (s.previous || '-') + prBadge + '</td>' +
           '<td>' +
@@ -479,7 +903,6 @@
 
       html += '</tbody></table></div>';
 
-      // Acciones inferiores del ejercicio
       html += '<div class="exercise-card-footer">' +
         '<button class="btn btn-outline-sm btn-add-set" data-exercise-index="' + exIdx + '">+ Añadir Serie</button>' +
       '</div></div>';
@@ -490,7 +913,6 @@
     bindActiveWorkoutEvents: function(container) {
       var self = this;
 
-      // Marcar / desmarcar serie
       container.querySelectorAll('.btn-check-set').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
@@ -499,7 +921,6 @@
         });
       });
 
-      // Cambiar tipo de serie (Normal -> Calentamiento -> Drop Set -> Fallo)
       container.querySelectorAll('.set-type-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
@@ -508,7 +929,6 @@
         });
       });
 
-      // Inputs de peso y repeticiones
       container.querySelectorAll('.set-weight-input').forEach(function(input) {
         input.addEventListener('change', function() {
           var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
@@ -525,7 +945,6 @@
         });
       });
 
-      // Botón añadir serie
       container.querySelectorAll('.btn-add-set').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
@@ -533,7 +952,6 @@
         });
       });
 
-      // Quitar ejercicio
       container.querySelectorAll('.btn-remove-exercise').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
@@ -543,7 +961,6 @@
         });
       });
 
-      // Botón vídeo técnica
       container.querySelectorAll('.btn-video-chip').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var exId = this.getAttribute('data-exercise-id');
@@ -553,7 +970,6 @@
         });
       });
 
-      // Botón trigger añadir ejercicio
       var emptyTrigger = container.querySelector('.btn-add-exercise-trigger');
       if (emptyTrigger) {
         emptyTrigger.addEventListener('click', function() {
@@ -565,7 +981,7 @@
     },
 
     // -------------------------------------------------------------------------
-    // TEMPORIZADOR DE DESCANSO FLOTANTE (REST TIMER)
+    // TEMPORIZADOR DE DESCANSO FLOTANTE
     // -------------------------------------------------------------------------
     showRestTimerWidget: function(totalSeconds) {
       var widget = document.getElementById('floating-rest-timer');
@@ -577,9 +993,7 @@
 
     hideRestTimerWidget: function() {
       var widget = document.getElementById('floating-rest-timer');
-      if (widget) {
-        widget.classList.remove('visible');
-      }
+      if (widget) widget.classList.remove('visible');
     },
 
     updateRestTimerDisplay: function(detail) {
@@ -589,11 +1003,9 @@
       var textEl = widget.querySelector('.rest-timer-time');
       var circle = widget.querySelector('.rest-progress-circle');
 
-      if (textEl) {
-        textEl.textContent = global.WorkoutEngine.formatDuration(detail.remaining);
-      }
+      if (textEl) textEl.textContent = global.WorkoutEngine.formatDuration(detail.remaining);
       if (circle) {
-        var circumference = 2 * Math.PI * 40; // radio 40
+        var circumference = 2 * Math.PI * 40;
         var offset = circumference - (detail.progress / 100) * circumference;
         circle.style.strokeDasharray = circumference;
         circle.style.strokeDashoffset = offset;
@@ -601,7 +1013,7 @@
     },
 
     // =========================================================================
-    // 3. SELECTOR DE EJERCICIOS (EXERCISE PICKER MODAL)
+    // 6. SELECTOR DE EJERCICIOS (EXERCISE PICKER MODAL)
     // =========================================================================
     openExercisePicker: function(callback) {
       this.exercisePickerCallback = callback;
@@ -628,10 +1040,7 @@
 
       var html = '';
       if (list.length === 0) {
-        html = '<div class="empty-state-card">' +
-          '<p>No se encontraron ejercicios con ese criterio.</p>' +
-          '<button class="btn btn-secondary btn-create-custom-ex">+ Crear Ejercicio Personalizado</button>' +
-        '</div>';
+        html = '<div class="empty-state-card"><p>No se encontraron ejercicios con ese criterio.</p></div>';
       } else {
         list.forEach(function(ex) {
           html += '<div class="picker-exercise-item" data-id="' + ex.id + '">' +
@@ -657,70 +1066,11 @@
           }
         });
       });
-
-      var createBtn = container.querySelector('.btn-create-custom-ex');
-      if (createBtn) {
-        createBtn.addEventListener('click', function() {
-          self.closeExercisePicker();
-          self.showCreateCustomExerciseModal();
-        });
-      }
     },
 
     // =========================================================================
-    // 4. PESTAÑA RUTINAS Y CREADOR (ROUTINES TAB & BUILDER)
+    // 7. CREADOR Y EDITOR DE RUTINAS (ROUTINE BUILDER MODAL)
     // =========================================================================
-    renderRoutinesTab: function() {
-      var container = document.getElementById('routines-tab-container');
-      if (!container) return;
-
-      var custom = global.RutinasMaestras ? global.RutinasMaestras.getPersonalizadas() : [];
-      var oficiales = global.RutinasMaestras ? global.RutinasMaestras.getOficiales() : [];
-
-      var html = '<div class="routines-tab-header">' +
-        '<div class="tab-header-titles">' +
-          '<h3>Mis Rutinas y Plantillas</h3>' +
-          '<p>Diseña tus propias rutinas o adapta el sistema de Jose Perez.</p>' +
-        '</div>' +
-        '<button class="btn btn-primary btn-trigger-new-routine">+ Nueva Rutina</button>' +
-      '</div>';
-
-      // Rutinas del usuario
-      html += '<div class="section-title-wrap"><h4 class="section-heading">Creadas por Ti (' + custom.length + ')</h4></div>';
-      if (custom.length === 0) {
-        html += '<div class="empty-state-card">' +
-          '<div class="empty-icon">📋</div>' +
-          '<h4>Aún no has creado rutinas propias</h4>' +
-          '<p>Pulsa en "+ Nueva Rutina" para armar tu rutina personalizada con tus ejercicios y series.</p>' +
-          '<button class="btn btn-primary btn-trigger-new-routine">+ Crear mi Primera Rutina</button>' +
-        '</div>';
-      } else {
-        html += '<div class="routines-grid">';
-        custom.forEach(function(r) {
-          html += App.generateRoutineCardHTML(r, true);
-        });
-        html += '</div>';
-      }
-
-      // Rutinas oficiales
-      html += '<div class="section-title-wrap" style="margin-top: 2rem;"><h4 class="section-heading">Plantillas Oficiales Jose Perez</h4><span class="count-pill official-pill">Oficial</span></div>';
-      html += '<div class="routines-grid">';
-      oficiales.forEach(function(r) {
-        html += App.generateRoutineCardHTML(r, false);
-      });
-      html += '</div>';
-
-      container.innerHTML = html;
-      this.bindRoutineCardEvents(container);
-
-      var self = this;
-      container.querySelectorAll('.btn-trigger-new-routine').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          self.openRoutineBuilder(null);
-        });
-      });
-    },
-
     openRoutineBuilder: function(routineId) {
       if (routineId) {
         global.RoutineBuilder.loadForEditing(routineId);
@@ -773,19 +1123,19 @@
             '</div>' +
             '<div class="builder-ex-body">' +
               '<div class="input-group-row">' +
-                '<label>Rango de Repeticiones Objetivo:</label>' +
+                '<label>Reps Objetivo:</label>' +
                 '<input type="text" class="form-control-sm builder-reps-input" data-index="' + idx + '" value="' + (ex.targetReps || '8-10') + '" placeholder="Ej: 8-10 o RIR 0">' +
               '</div>' +
               '<div class="input-group-row">' +
-                '<label>Series predeterminadas: <strong>' + (ex.defaultSets ? ex.defaultSets.length : 3) + ' series</strong></label>' +
+                '<label>Series: <strong>' + (ex.defaultSets ? ex.defaultSets.length : 3) + '</strong></label>' +
                 '<div class="set-stepper">' +
                   '<button class="btn-stepper btn-sub-set" data-index="' + idx + '">-</button>' +
                   '<button class="btn-stepper btn-add-set" data-index="' + idx + '">+</button>' +
                 '</div>' +
               '</div>' +
               '<div class="input-group-row">' +
-                '<label>Directriz / Notas:</label>' +
-                '<input type="text" class="form-control-sm builder-notes-input" data-index="' + idx + '" value="' + (ex.notes || '') + '" placeholder="Ej: Excéntrico en 5s, pausa abajo">' +
+                '<label>Directriz:</label>' +
+                '<input type="text" class="form-control-sm builder-notes-input" data-index="' + idx + '" value="' + (ex.notes || '') + '" placeholder="Ej: 5s excéntrico">' +
               '</div>' +
             '</div>' +
           '</div>';
@@ -870,13 +1220,11 @@
     },
 
     // =========================================================================
-    // 5. PESTAÑA CHAT (COACH JOSE PEREZ & TEAM FEED)
+    // 8. CHAT, HISTORIAL, PERFIL Y HERRAMIENTAS GYM
     // =========================================================================
     renderChatTab: function() {
-      var self = this;
       var curChannel = global.ChatEngine ? global.ChatEngine.currentChannel : 'coach';
 
-      // Actualizar selector de canal
       document.querySelectorAll('.chat-channel-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.getAttribute('data-channel') === curChannel);
       });
@@ -917,7 +1265,6 @@
             '<div class="chat-bubble-text">' + msg.text.replace(/\n/g, '<br>') + '</div>' +
             '<div class="chat-bubble-time">' + (msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '') + '</div>';
 
-        // Reacciones de emojis si tiene
         if (msg.reactions && Object.keys(msg.reactions).length > 0) {
           html += '<div class="chat-reactions-row">';
           for (var emoji in msg.reactions) {
@@ -933,7 +1280,6 @@
       container.innerHTML = html;
       container.scrollTop = container.scrollHeight;
 
-      // Eventos de reacción en emojis
       container.querySelectorAll('.reaction-tag').forEach(function(tag) {
         tag.addEventListener('click', function() {
           var mId = this.getAttribute('data-msg-id');
@@ -944,9 +1290,6 @@
       });
     },
 
-    // =========================================================================
-    // 6. PESTAÑA HISTORIAL Y ANALÍTICA (HISTORY & STATS TAB)
-    // =========================================================================
     renderHistoryTab: function() {
       var container = document.getElementById('history-workouts-container');
       var statsWrap = document.getElementById('history-stats-banner');
@@ -957,27 +1300,13 @@
 
       var stats = global.Analytics.getGlobalStats();
 
-      // Renderizar banner de estadísticas
       if (statsWrap) {
-        statsWrap.innerHTML = '<div class="stat-box">' +
-          '<span class="stat-number">' + stats.totalWorkouts + '</span>' +
-          '<span class="stat-label">Entrenos</span>' +
-        '</div>' +
-        '<div class="stat-box">' +
-          '<span class="stat-number">' + stats.totalVolumeTonnes + ' t</span>' +
-          '<span class="stat-label">Volumen Total</span>' +
-        '</div>' +
-        '<div class="stat-box">' +
-          '<span class="stat-number">' + stats.totalHours + ' h</span>' +
-          '<span class="stat-label">Horas Gym</span>' +
-        '</div>' +
-        '<div class="stat-box">' +
-          '<span class="stat-number">🏆 ' + stats.totalPRs + '</span>' +
-          '<span class="stat-label">Récords PR</span>' +
-        '</div>';
+        statsWrap.innerHTML = '<div class="stat-box"><span class="stat-number">' + stats.totalWorkouts + '</span><span class="stat-label">Entrenos</span></div>' +
+          '<div class="stat-box"><span class="stat-number">' + stats.totalVolumeTonnes + ' t</span><span class="stat-label">Volumen Total</span></div>' +
+          '<div class="stat-box"><span class="stat-number">' + stats.totalHours + ' h</span><span class="stat-label">Horas Gym</span></div>' +
+          '<div class="stat-box"><span class="stat-number">🏆 ' + stats.totalPRs + '</span><span class="stat-label">Récords PR</span></div>';
       }
 
-      // Renderizar Heatmap de actividad (12 semanas)
       if (heatmapWrap) {
         var heatmapCells = global.Analytics.getActivityHeatmapData();
         var heatHtml = '';
@@ -988,21 +1317,17 @@
         heatmapWrap.innerHTML = heatHtml;
       }
 
-      // Renderizar Récords Personales (PRs)
       if (prsWrap) {
         var prs = (global.AppState && global.AppState.prs) ? global.AppState.prs : {};
         var prKeys = Object.keys(prs);
         if (prKeys.length === 0) {
-          prsWrap.innerHTML = '<p class="text-muted">Aún no hay récords registrados. ¡Completa tu próximo entreno para desbloquear tus marcas!</p>';
+          prsWrap.innerHTML = '<p class="text-muted">Aún no hay récords registrados.</p>';
         } else {
           var prHtml = '<div class="prs-grid">';
           prKeys.forEach(function(k) {
             var pr = prs[k];
             prHtml += '<div class="pr-card">' +
-              '<div class="pr-header">' +
-                '<span class="pr-trophy">🏆</span>' +
-                '<h5 class="pr-title">' + (pr.exerciseName || k) + '</h5>' +
-              '</div>' +
+              '<div class="pr-header"><span class="pr-trophy">🏆</span><h5 class="pr-title">' + (pr.exerciseName || k) + '</h5></div>' +
               '<div class="pr-numbers">' +
                 '<div class="pr-metric"><span class="pr-val">' + pr.maxWeight + ' kg</span><span class="pr-sub">Máx Carga (' + pr.maxRepsAtMaxWeight + ' reps)</span></div>' +
                 (pr.maxEstimated1RM ? '<div class="pr-metric"><span class="pr-val">' + pr.maxEstimated1RM + ' kg</span><span class="pr-sub">1RM Est.</span></div>' : '') +
@@ -1014,15 +1339,10 @@
         }
       }
 
-      // Renderizar Lista de entrenamientos pasados
       if (container) {
         var workouts = (global.AppState && global.AppState.workoutHistory) ? global.AppState.workoutHistory : [];
         if (workouts.length === 0) {
-          container.innerHTML = '<div class="empty-state-card">' +
-            '<div class="empty-icon">📊</div>' +
-            '<h4>No tienes entrenamientos registrados</h4>' +
-            '<p>Comienza un entrenamiento libre o elige una de las 6 rutinas de Jose Perez.</p>' +
-          '</div>';
+          container.innerHTML = '<div class="empty-state-card"><div class="empty-icon">📊</div><h4>No tienes entrenamientos registrados</h4></div>';
         } else {
           var wHtml = '';
           workouts.forEach(function(w) {
@@ -1031,10 +1351,7 @@
 
             wHtml += '<div class="history-workout-card">' +
               '<div class="history-card-header">' +
-                '<div>' +
-                  '<h4 class="history-workout-title">' + w.name + '</h4>' +
-                  '<span class="history-workout-date">📅 ' + dateStr + ' · ⏱️ ' + durStr + '</span>' +
-                '</div>' +
+                '<div><h4 class="history-workout-title">' + w.name + '</h4><span class="history-workout-date">📅 ' + dateStr + ' · ⏱️ ' + durStr + '</span></div>' +
                 '<button class="btn btn-outline-sm btn-repeat-workout" data-workout-id="' + w.id + '">Repetir</button>' +
               '</div>' +
               '<div class="history-metrics-row">' +
@@ -1042,28 +1359,10 @@
                 '<div class="metric-pill">🔢 <strong>' + (w.totalSets || 0) + '</strong> series</div>' +
                 (w.prsCount > 0 ? '<div class="metric-pill pr-pill">🏆 <strong>' + w.prsCount + ' PRs</strong></div>' : '') +
               '</div>' +
-              '<div class="history-exercises-breakdown">';
-
-            if (w.exercises) {
-              w.exercises.forEach(function(ex) {
-                var bestSet = '-';
-                if (ex.sets) {
-                  var maxW = 0;
-                  var maxR = 0;
-                  ex.sets.forEach(function(s) {
-                    if (s.completed && s.weight >= maxW) { maxW = s.weight; maxR = s.reps; }
-                  });
-                  if (maxW > 0) bestSet = maxW + ' kg × ' + maxR;
-                }
-                wHtml += '<div class="history-ex-row"><span>' + ex.name + '</span><span class="ex-best-val">' + bestSet + '</span></div>';
-              });
-            }
-
-            wHtml += '</div></div>';
+            '</div>';
           });
           container.innerHTML = wHtml;
 
-          var self = this;
           container.querySelectorAll('.btn-repeat-workout').forEach(function(btn) {
             btn.addEventListener('click', function() {
               var wId = this.getAttribute('data-workout-id');
@@ -1073,11 +1372,7 @@
                   id: found.routineId,
                   titulo: found.name,
                   ejercicios: found.exercises.map(function(e) {
-                    return {
-                      exerciseId: e.exerciseId,
-                      name: e.name,
-                      defaultSets: e.sets
-                    };
+                    return { exerciseId: e.exerciseId, name: e.name, defaultSets: e.sets };
                   })
                 });
               }
@@ -1087,9 +1382,6 @@
       }
     },
 
-    // =========================================================================
-    // 7. PESTAÑA PERFIL Y HERRAMIENTAS GYM (PROFILE TAB)
-    // =========================================================================
     renderProfileTab: function() {
       var user = global.AppState ? global.AppState.currentUser : null;
       var nameEl = document.getElementById('profile-name');
@@ -1102,7 +1394,6 @@
       var avatarWrap = document.getElementById('profile-avatar-wrap');
 
       if (!user) return;
-
       if (nameEl) nameEl.textContent = user.name || 'Atleta';
       if (emailEl) emailEl.textContent = user.email || 'atleta@jperezcoach.com';
       if (roleEl) roleEl.textContent = user.role || 'Atleta JPEREZ';
@@ -1120,9 +1411,6 @@
       }
     },
 
-    // =========================================================================
-    // 8. HERRAMIENTAS GYM (CALCULADORA DE DISCOS Y 1RM)
-    // =========================================================================
     calculateAndRenderPlates: function(targetKg, barKg) {
       var res = global.Analytics.calculatePlates(targetKg, barKg);
       var platesWrap = document.getElementById('plate-calc-visual-barbell');
@@ -1136,45 +1424,23 @@
         return;
       }
 
-      // Visualización gráfica de la barra con discos de colores
-      var visualHtml = '<div class="barbell-graphic-wrap">' +
-        '<div class="barbell-sleeve left-sleeve">';
-
+      var visualHtml = '<div class="barbell-graphic-wrap"><div class="barbell-sleeve left-sleeve">';
       res.platesPerSide.slice().reverse().forEach(function(plate) {
         visualHtml += '<div class="plate-visual" style="background-color: ' + plate.color + '; color: ' + plate.textColor + ';" title="' + plate.label + '">' + plate.label + '</div>';
       });
-
-      visualHtml += '</div>' +
-        '<div class="barbell-collar"></div>' +
-        '<div class="barbell-shaft"><span class="barbell-shaft-label">BARRA ' + barKg + 'KG</span></div>' +
-        '<div class="barbell-collar"></div>' +
-        '<div class="barbell-sleeve right-sleeve">';
-
+      visualHtml += '</div><div class="barbell-collar"></div><div class="barbell-shaft"><span class="barbell-shaft-label">BARRA ' + barKg + 'KG</span></div><div class="barbell-collar"></div><div class="barbell-sleeve right-sleeve">';
       res.platesPerSide.forEach(function(plate) {
         visualHtml += '<div class="plate-visual" style="background-color: ' + plate.color + '; color: ' + plate.textColor + ';" title="' + plate.label + '">' + plate.label + '</div>';
       });
-
       visualHtml += '</div></div>';
       platesWrap.innerHTML = visualHtml;
 
-      // Resumen textual de discos por lado
       var counts = {};
-      res.platesPerSide.forEach(function(p) {
-        counts[p.label] = (counts[p.label] || 0) + 1;
-      });
-
+      res.platesPerSide.forEach(function(p) { counts[p.label] = (counts[p.label] || 0) + 1; });
       var textParts = [];
-      for (var lbl in counts) {
-        textParts.push('<strong>' + counts[lbl] + 'x ' + lbl + '</strong>');
-      }
+      for (var lbl in counts) { textParts.push('<strong>' + counts[lbl] + 'x ' + lbl + '</strong>'); }
 
-      var textHtml = '<div class="breakdown-info">' +
-        '<p>Carga por cada lado: <strong>' + res.weightPerSide + ' kg</strong></p>' +
-        '<p>Discos a poner por lado: ' + textParts.join(', ') + '</p>' +
-        (res.remainder > 0 ? '<p class="warning-text">⚠️ Quedan ' + res.remainder + ' kg que no se pueden cuadrar con discos estándar.</p>' : '') +
-      '</div>';
-
-      breakdownWrap.innerHTML = textHtml;
+      breakdownWrap.innerHTML = '<div class="breakdown-info"><p>Carga por lado: <strong>' + res.weightPerSide + ' kg</strong> (' + textParts.join(', ') + ')</p></div>';
     },
 
     calculateAndRender1RM: function(weight, reps) {
@@ -1183,34 +1449,22 @@
       var tableWrap = document.getElementById('calc-1rm-table-wrap');
 
       if (!resultsWrap || !tableWrap) return;
-
       if (!res) {
         resultsWrap.innerHTML = '<p class="text-muted">Introduce el peso levantado y las repeticiones.</p>';
         tableWrap.innerHTML = '';
         return;
       }
 
-      resultsWrap.innerHTML = '<div class="one-rm-hero">' +
-        '<span class="one-rm-label">1RM Estimado:</span>' +
-        '<span class="one-rm-big-number">' + res.average + ' kg</span>' +
-        '<span class="one-rm-formulas">Epley: ' + res.epley + 'kg · Brzycki: ' + res.brzycki + 'kg</span>' +
-      '</div>';
+      resultsWrap.innerHTML = '<div class="one-rm-hero"><span class="one-rm-label">1RM Estimado:</span><span class="one-rm-big-number">' + res.average + ' kg</span></div>';
 
-      var tHtml = '<table class="table-percentages">' +
-        '<thead><tr><th>% 1RM</th><th>Carga (kg)</th><th>Rango de Repeticiones</th></tr></thead>' +
-        '<tbody>';
-
+      var tHtml = '<table class="table-percentages"><thead><tr><th>% 1RM</th><th>Carga (kg)</th><th>Reps</th></tr></thead><tbody>';
       res.percentages.forEach(function(p) {
         tHtml += '<tr><td><strong>' + p.percentage + '%</strong></td><td class="text-cyan"><strong>' + p.weightKg + ' kg</strong></td><td>' + p.repsGuide + '</td></tr>';
       });
-
       tHtml += '</tbody></table>';
       tableWrap.innerHTML = tHtml;
     },
 
-    // =========================================================================
-    // 9. MODALES SECUNDARIOS (VÍDEO, RESUMEN FIN ENTRENAMIENTO, LOGIN)
-    // =========================================================================
     showVideoModal: function(exercise) {
       var modal = document.getElementById('modal-video-player');
       if (!modal) return;
@@ -1247,7 +1501,7 @@
       if (modal) {
         modal.classList.remove('open');
         var frameWrap = document.getElementById('video-frame-container');
-        if (frameWrap) frameWrap.innerHTML = ''; // Detener reproducción
+        if (frameWrap) frameWrap.innerHTML = '';
       }
     },
 
@@ -1262,6 +1516,7 @@
       var descEl = document.getElementById('preview-routine-desc');
       var exListEl = document.getElementById('preview-routine-exercises');
       var startBtn = document.getElementById('btn-preview-start-routine');
+      var exportBtn = document.getElementById('btn-preview-export-routine');
 
       if (titleEl) titleEl.textContent = r.titulo;
       if (descEl) descEl.textContent = r.descripcion || (r.foco ? r.foco.join(' · ') : '');
@@ -1300,6 +1555,13 @@
         };
       }
 
+      var self = this;
+      if (exportBtn) {
+        exportBtn.onclick = function() {
+          self.openExportRoutineModal(routineId);
+        };
+      }
+
       modal.classList.add('open');
     },
 
@@ -1322,7 +1584,7 @@
 
       if (prsWrap) {
         if (summary.prsUnlocked && summary.prsUnlocked.length > 0) {
-          var prHtml = '<div class="summary-prs-banner"><h4>🏆 ¡' + summary.prsUnlocked.length + ' Nuevos Récords Personales!</h4><ul>';
+          var prHtml = '<div class="summary-prs-banner"><h4>🏆 ¡' + summary.prsUnlocked.length + ' Nuevos Récords!</h4><ul>';
           summary.prsUnlocked.forEach(function(pr) {
             prHtml += '<li><strong>' + pr.exerciseName + '</strong>: ' + pr.weight + ' kg × ' + pr.reps + ' reps</li>';
           });
@@ -1374,8 +1636,273 @@
 
   global.App = App;
 
-  // Arrancar al cargar el DOM
   document.addEventListener('DOMContentLoaded', function() {
     App.init();
+
+    // Eventos de botones estáticos
+    var btnStartEmpty = document.getElementById('btn-start-empty-workout');
+    if (btnStartEmpty) {
+      btnStartEmpty.addEventListener('click', function() {
+        WorkoutEngine.startEmptyWorkout();
+      });
+    }
+
+    var btnHeroNewRoutine = document.getElementById('btn-hero-new-routine');
+    if (btnHeroNewRoutine) {
+      btnHeroNewRoutine.addEventListener('click', function() {
+        App.openRoutineBuilder(null);
+      });
+    }
+
+    var btnMinimize = document.getElementById('btn-minimize-active-workout');
+    if (btnMinimize) {
+      btnMinimize.addEventListener('click', function() {
+        App.hideActiveWorkoutModal();
+        App.updateStickyWorkoutBar();
+      });
+    }
+
+    var btnFinish = document.getElementById('btn-finish-workout');
+    if (btnFinish) {
+      btnFinish.addEventListener('click', function() {
+        if (confirm('¿Deseas finalizar y guardar este entrenamiento?')) {
+          WorkoutEngine.finishWorkout();
+        }
+      });
+    }
+
+    var btnDiscard = document.getElementById('btn-discard-workout');
+    if (btnDiscard) {
+      btnDiscard.addEventListener('click', function() {
+        if (confirm('¿Estás seguro de descartar este entrenamiento?')) {
+          WorkoutEngine.discardWorkout();
+        }
+      });
+    }
+
+    var btnAddExActive = document.getElementById('btn-add-exercise-to-active');
+    if (btnAddExActive) {
+      btnAddExActive.addEventListener('click', function() {
+        App.openExercisePicker(function(exerciseId) {
+          WorkoutEngine.addExerciseToWorkout(exerciseId);
+        });
+      });
+    }
+
+    var btnClosePicker = document.getElementById('btn-close-picker');
+    if (btnClosePicker) btnClosePicker.onclick = function() { App.closeExercisePicker(); };
+
+    var searchInput = document.getElementById('picker-search-input');
+    if (searchInput) searchInput.oninput = function() { App.renderExercisePickerList(); };
+
+    var muscleChips = document.querySelectorAll('#picker-muscle-chips .chip');
+    muscleChips.forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        muscleChips.forEach(function(c) { c.classList.remove('active'); });
+        this.classList.add('active');
+        App.selectedFilterGroup = this.getAttribute('data-group');
+        App.renderExercisePickerList();
+      });
+    });
+
+    // Rutinas modal
+    var btnCloseBuilder = document.getElementById('btn-close-builder');
+    if (btnCloseBuilder) btnCloseBuilder.onclick = function() { App.closeRoutineBuilder(); };
+
+    var btnSaveDraft = document.getElementById('btn-save-routine-draft');
+    if (btnSaveDraft) {
+      btnSaveDraft.addEventListener('click', function() {
+        var titleIn = document.getElementById('builder-routine-title');
+        var descIn = document.getElementById('builder-routine-desc');
+        var catIn = document.getElementById('builder-routine-category');
+
+        if (RoutineBuilder.currentDraft) {
+          if (titleIn) RoutineBuilder.currentDraft.titulo = titleIn.value;
+          if (descIn) RoutineBuilder.currentDraft.descripcion = descIn.value;
+          if (catIn) RoutineBuilder.currentDraft.categoria = catIn.value;
+        }
+
+        var res = RoutineBuilder.saveCurrentDraft();
+        if (res.success) {
+          App.closeRoutineBuilder();
+          App.showToast('¡Rutina guardada!');
+          App.renderWorkoutTab();
+          App.renderRoutinesTab();
+        } else {
+          alert(res.message);
+        }
+      });
+    }
+
+    var btnClosePreview = document.getElementById('btn-close-preview');
+    if (btnClosePreview) {
+      btnClosePreview.onclick = function() {
+        document.getElementById('modal-routine-preview').classList.remove('open');
+      };
+    }
+
+    var btnCloseVideo = document.getElementById('btn-close-video');
+    if (btnCloseVideo) btnCloseVideo.onclick = function() { App.closeVideoModal(); };
+
+    var btnCloseSummary = document.getElementById('btn-close-summary');
+    if (btnCloseSummary) {
+      btnCloseSummary.onclick = function() {
+        document.getElementById('modal-workout-summary').classList.remove('open');
+        App.switchTab('tab-history');
+      };
+    }
+
+    // Controles de temporizador de descanso
+    var btnRestPlus30 = document.getElementById('btn-rest-plus-30');
+    if (btnRestPlus30) btnRestPlus30.onclick = function() { WorkoutEngine.addRestTime(30); };
+
+    var btnRestMinus15 = document.getElementById('btn-rest-minus-15');
+    if (btnRestMinus15) btnRestMinus15.onclick = function() { WorkoutEngine.addRestTime(-15); };
+
+    var btnRestSkip = document.getElementById('btn-rest-skip');
+    if (btnRestSkip) btnRestSkip.onclick = function() { WorkoutEngine.skipRestTimer(); };
+
+    // Chat
+    var chatChannelBtns = document.querySelectorAll('.chat-channel-btn');
+    chatChannelBtns.forEach(function(b) {
+      b.addEventListener('click', function() {
+        var ch = this.getAttribute('data-channel');
+        ChatEngine.setChannel(ch);
+        App.renderChatTab();
+      });
+    });
+
+    var chatForm = document.getElementById('chat-send-form');
+    var chatInput = document.getElementById('chat-text-input');
+    if (chatForm && chatInput) {
+      chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var txt = chatInput.value;
+        if (txt && txt.trim()) {
+          ChatEngine.sendMessage(txt);
+          chatInput.value = '';
+        }
+      });
+    }
+
+    var btnShareChat = document.getElementById('btn-share-last-workout-chat');
+    if (btnShareChat) {
+      btnShareChat.onclick = function() {
+        ChatEngine.shareLastWorkout(ChatEngine.currentChannel);
+      };
+    }
+
+    var btnWa = document.getElementById('btn-open-whatsapp');
+    if (btnWa) {
+      btnWa.onclick = function() {
+        var url = ChatEngine.getWhatsAppUrl();
+        window.open(url, '_blank');
+      };
+    }
+
+    document.querySelectorAll('.prompt-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        var prompt = this.getAttribute('data-prompt');
+        ChatEngine.sendMessage(prompt, 'coach');
+        ChatEngine.setChannel('coach');
+        App.renderChatTab();
+      });
+    });
+
+    // Herramientas Gym
+    var plateTarget = document.getElementById('plate-calc-target');
+    var plateBar = document.getElementById('plate-calc-bar');
+    function updatePlates() {
+      if (plateTarget && plateBar) {
+        App.calculateAndRenderPlates(plateTarget.value, plateBar.value);
+      }
+    }
+    if (plateTarget) plateTarget.oninput = updatePlates;
+    if (plateBar) plateBar.onchange = updatePlates;
+    updatePlates();
+
+    var calc1rmWeight = document.getElementById('calc-1rm-weight');
+    var calc1rmReps = document.getElementById('calc-1rm-reps');
+    function update1RM() {
+      if (calc1rmWeight && calc1rmReps) {
+        App.calculateAndRender1RM(calc1rmWeight.value, calc1rmReps.value);
+      }
+    }
+    if (calc1rmWeight) calc1rmWeight.oninput = update1RM;
+    if (calc1rmReps) calc1rmReps.oninput = update1RM;
+    update1RM();
+
+    // Exportar / Importar JSON general
+    var btnExport = document.getElementById('btn-export-data');
+    if (btnExport) {
+      btnExport.onclick = function() {
+        var json = AppState.exportAllData();
+        var blob = new Blob([json], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'jperezcoach_backup_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        App.showToast('Copia de seguridad descargada.');
+      };
+    }
+
+    var fileImport = document.getElementById('file-import-data');
+    if (fileImport) {
+      fileImport.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          var ok = AppState.importAllData(evt.target.result);
+          if (!ok) alert('El archivo no tiene un formato válido.');
+        };
+        reader.readAsText(file);
+      };
+    }
+
+    // Auth modal
+    var btnHeaderProfile = document.getElementById('btn-header-profile');
+    var btnOpenAuth = document.getElementById('btn-open-auth-modal');
+    var modalAuth = document.getElementById('modal-auth');
+    var btnCloseAuth = document.getElementById('btn-close-auth');
+
+    function openAuth() { if (modalAuth) modalAuth.classList.add('open'); }
+    function closeAuth() { if (modalAuth) modalAuth.classList.remove('open'); }
+
+    if (btnHeaderProfile) btnHeaderProfile.onclick = openAuth;
+    if (btnOpenAuth) btnOpenAuth.onclick = openAuth;
+    if (btnCloseAuth) btnCloseAuth.onclick = closeAuth;
+
+    document.querySelectorAll('.demo-user-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var uId = this.getAttribute('data-user-id');
+        AuthService.switchAccount(uId);
+        document.querySelectorAll('.demo-user-card').forEach(function(c) { c.classList.remove('active'); });
+        this.classList.add('active');
+        closeAuth();
+        App.showToast('Sesión cambiada a: ' + (AppState.currentUser ? AppState.currentUser.name : ''));
+      });
+    });
+
+    var registerForm = document.getElementById('auth-register-form');
+    if (registerForm) {
+      registerForm.onsubmit = function(e) {
+        e.preventDefault();
+        var name = document.getElementById('reg-name').value;
+        var email = document.getElementById('reg-email').value;
+        var weight = document.getElementById('reg-weight').value;
+        var height = document.getElementById('reg-height').value;
+
+        var res = AuthService.register({ name: name, email: email, weight: weight, height: height });
+        if (res.success) {
+          closeAuth();
+          App.showToast('¡Bienvenido, ' + res.user.name + '!');
+        } else {
+          alert(res.message);
+        }
+      };
+    }
   });
 })(window);

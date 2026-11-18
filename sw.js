@@ -1,8 +1,8 @@
 // =============================================================================
-// JPEREZCOACH APP · SERVICE WORKER (OFFLINE PWA CACHE)
+// JPEREZCOACH APP · SERVICE WORKER (OFFLINE PWA CACHE V3)
 // =============================================================================
 
-const CACHE_NAME = 'jperezcoach-v2.0.0';
+const CACHE_NAME = 'jperezcoach-v3.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,9 +15,12 @@ const ASSETS_TO_CACHE = [
   './icon.svg',
   './coach.png',
   './banner.jpg',
+  './lib/pdf.min.js',
+  './lib/pdf.worker.min.js',
   './js/state.js',
   './js/db-ejercicios.js',
   './js/rutinas-oficiales.js',
+  './js/pdf-importer.js',
   './js/auth.js',
   './js/workout-engine.js',
   './js/routine-builder.js',
@@ -51,7 +54,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignorar peticiones a APIs externas (ej. YouTube, WhatsApp)
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
@@ -72,7 +74,6 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       });
     }).catch(() => {
-      // Fallback a index.html en navegación si offline
       if (event.request.mode === 'navigate') {
         return caches.match('./index.html');
       }
