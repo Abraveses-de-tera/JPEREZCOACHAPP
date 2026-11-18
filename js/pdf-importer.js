@@ -82,7 +82,7 @@
         reglas: [
           {
             paso: "1. Encabezado del Plan",
-            descripcion: "Incluye el título del plan y el nombre del atleta al inicio (ej: 'PLAN DE ENTRENAMIENTO - David Otero · Hipertrofia')."
+            descripcion: "Incluye el título del plan y tu nombre al inicio (ej: 'PLAN DE ENTRENAMIENTO - Carlos Gómez · Hipertrofia')."
           },
           {
             paso: "2. Separación de Días",

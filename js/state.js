@@ -1,69 +1,24 @@
 // =============================================================================
-// JPEREZCOACH APP · ESTADO GLOBAL REACTIVO Y PERSISTENCIA (HEVY STYLE V3)
-// Rutinas 100% dinámicas, borrables, guardables y exportables + LocalStorage
+// JPEREZCOACH PRO · ESTADO GLOBAL REACTIVO Y PERSISTENCIA LOCAL MULTIUSUARIO
+// Perfiles personalizados, rutinas dinámicas por atleta y almacenamiento seguro
 // =============================================================================
 
 (function(global) {
   'use strict';
 
   var STORAGE_KEYS = {
-    USER: 'jperez_current_user_v3',
-    USERS: 'jperez_all_users_v3',
-    ACTIVE_WORKOUT: 'jperez_active_workout_v3',
-    WORKOUT_HISTORY: 'jperez_workout_history_v3',
-    ROUTINES: 'jperez_all_routines_v3', // Almacén dinámico unificado de rutinas
-    CUSTOM_EXERCISES: 'jperez_custom_exercises_v3',
-    CHAT_COACH: 'jperez_chat_coach_v3',
-    CHAT_TEAM: 'jperez_chat_team_v3',
-    SETTINGS: 'jperez_app_settings_v3',
-    PRS: 'jperez_personal_records_v3'
+    USER: 'jperez_active_user_v4',
+    USERS: 'jperez_profiles_v4',
+    ACTIVE_WORKOUT: 'jperez_active_workout_v4',
+    WORKOUT_HISTORY: 'jperez_workout_history_v4',
+    ROUTINES: 'jperez_user_routines_v4',
+    CUSTOM_EXERCISES: 'jperez_custom_exercises_v4',
+    CHAT_COACH: 'jperez_chat_coach_v4',
+    CHAT_TEAM: 'jperez_chat_team_v4',
+    SETTINGS: 'jperez_app_settings_v4',
+    PRS: 'jperez_personal_records_v4',
+    ONBOARDING: 'jperez_onboarding_completed_v4'
   };
-
-  // Usuarios predeterminados para inicio de sesión inmediato / demo
-  var DEFAULT_USERS = [
-    {
-      id: 'david',
-      name: 'David Otero',
-      username: 'davidotero',
-      email: 'david@jperezcoach.com',
-      avatar: 'assets/coach_photo.png',
-      role: 'Atleta Oficial',
-      weight: 84.5,
-      height: 181,
-      goal: 'Hipertrofia y Alta Intensidad',
-      streak: 5,
-      joinedDate: '2026-01-10',
-      bio: 'Atleta JPEREZCOACH · Rutina 6 Días Rotativos · Enfoque RIR 0 y excéntricas controladas.'
-    },
-    {
-      id: 'jperez',
-      name: 'Jose Perez',
-      username: 'jperezcoach',
-      email: 'jperez@mail.com',
-      avatar: 'assets/coach_photo.png',
-      role: 'Head Coach',
-      weight: 92.0,
-      height: 184,
-      goal: 'Entrenador & Preparador',
-      streak: 18,
-      joinedDate: '2025-01-01',
-      bio: 'Entrenador Personal y Preparador de Atletas de Alta Intensidad. Contacto: +34 658 50 71 36 · jperezcoach.com'
-    },
-    {
-      id: 'invitado',
-      name: 'Nuevo Atleta',
-      username: 'atleta_invitado',
-      email: 'atleta@gym.com',
-      avatar: '',
-      role: 'Atleta en Formación',
-      weight: 78.0,
-      height: 178,
-      goal: 'Fuerza e Hipertrofia',
-      streak: 1,
-      joinedDate: '2026-11-18',
-      bio: 'Empezando el plan de fuerza con JPEREZCOACH.'
-    }
-  ];
 
   var DEFAULT_SETTINGS = {
     restTimerSeconds: 90,
@@ -80,41 +35,51 @@
     users: [],
     activeWorkout: null,
     workoutHistory: [],
-    routines: [], // Todas las rutinas activas (editables, borrables y exportables)
+    routines: [],
     customExercises: [],
     chatCoach: [],
     chatTeam: [],
     settings: Object.assign({}, DEFAULT_SETTINGS),
     prs: {},
+    hasCompletedOnboarding: false,
 
-    // Inicializar estado desde LocalStorage
     init: function() {
-      this.loadUsers();
       this.loadSettings();
+      this.loadUsers();
       this.loadActiveWorkout();
       this.loadWorkoutHistory();
       this.loadRoutines();
       this.loadCustomExercises();
       this.loadChats();
       this.loadPRs();
+
+      try {
+        this.hasCompletedOnboarding = localStorage.getItem(STORAGE_KEYS.ONBOARDING) === 'true';
+      } catch (e) {
+        this.hasCompletedOnboarding = false;
+      }
+
       return this;
     },
 
     loadUsers: function() {
       try {
         var raw = localStorage.getItem(STORAGE_KEYS.USERS);
-        this.users = raw ? JSON.parse(raw) : DEFAULT_USERS;
+        this.users = raw ? JSON.parse(raw) : [];
 
         var currentRaw = localStorage.getItem(STORAGE_KEYS.USER);
         if (currentRaw) {
           this.currentUser = JSON.parse(currentRaw);
-        } else {
+        } else if (this.users.length > 0) {
           this.currentUser = this.users[0];
           this.saveCurrentUser();
+        } else {
+          // Sin usuario configurado todavía; activará el asistente de bienvenida
+          this.currentUser = null;
         }
       } catch (e) {
-        this.users = DEFAULT_USERS;
-        this.currentUser = DEFAULT_USERS[0];
+        this.users = [];
+        this.currentUser = null;
       }
     },
 
@@ -129,6 +94,8 @@
             this.users.push(AppState.currentUser);
           }
           localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.users));
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.USER);
         }
       } catch (e) {
         console.error('Error guardando usuario:', e);
@@ -139,6 +106,13 @@
       this.currentUser = user;
       this.saveCurrentUser();
       document.dispatchEvent(new CustomEvent('jperez:user-changed', { detail: user }));
+    },
+
+    setOnboardingCompleted: function(completed) {
+      this.hasCompletedOnboarding = !!completed;
+      try {
+        localStorage.setItem(STORAGE_KEYS.ONBOARDING, completed ? 'true' : 'false');
+      } catch (e) {}
     },
 
     loadSettings: function() {
@@ -185,9 +159,9 @@
     loadWorkoutHistory: function() {
       try {
         var raw = localStorage.getItem(STORAGE_KEYS.WORKOUT_HISTORY);
-        this.workoutHistory = raw ? JSON.parse(raw) : this.generateSeedHistory();
+        this.workoutHistory = raw ? JSON.parse(raw) : [];
       } catch (e) {
-        this.workoutHistory = this.generateSeedHistory();
+        this.workoutHistory = [];
       }
     },
 
@@ -216,7 +190,7 @@
     },
 
     // =========================================================================
-    // GESTIÓN DINÁMICA DE RUTINAS (BORRAR, GUARDAR, RESTAURAR, EXPORTAR)
+    // GESTIÓN DINÁMICA DE RUTINAS
     // =========================================================================
     loadRoutines: function() {
       try {
@@ -224,13 +198,8 @@
         if (raw) {
           this.routines = JSON.parse(raw);
         } else {
-          // Si es la primera vez, cargar las plantillas maestras oficiales de Jose Perez
-          if (global.RutinasMaestras && global.RutinasMaestras.PLANTILLAS_OFICIALES) {
-            this.routines = JSON.parse(JSON.stringify(global.RutinasMaestras.PLANTILLAS_OFICIALES));
-          } else {
-            this.routines = [];
-          }
-          this.saveRoutines();
+          // Por defecto lista vacía esperando que el atleta suba su PDF o elija plantilla
+          this.routines = [];
         }
       } catch (e) {
         this.routines = [];
@@ -248,7 +217,7 @@
 
     addRoutine: function(routine) {
       if (!routine.id) {
-        routine.id = 'rutina_' + Date.now();
+        routine.id = 'rutina_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
       }
       routine.createdAt = new Date().toISOString();
       this.routines.unshift(routine);
@@ -451,53 +420,16 @@
       return null;
     },
 
-    generateSeedHistory: function() {
-      return [
-        {
-          id: 'w_seed_1',
-          name: '1 PULL · Espalda y Bíceps',
-          routineId: 'D1',
-          date: '2026-11-16T18:30:00.000Z',
-          endedAt: '2026-11-16T19:42:00.000Z',
-          durationSeconds: 4320,
-          totalVolumeKg: 9480,
-          totalSets: 16,
-          totalReps: 124,
-          prsCount: 2,
-          exercises: [
-            {
-              exerciseId: 'dominadas_jalon',
-              name: 'Dominadas/jalón',
-              sets: [
-                { setNumber: 1, type: 'pesada', weight: 85, reps: 6, completed: true, isPR: true },
-                { setNumber: 2, type: 'pesada', weight: 85, reps: 5, completed: true, isPR: false },
-                { setNumber: 3, type: 'pesada', weight: 80, reps: 6, completed: true, isPR: false }
-              ]
-            },
-            {
-              exerciseId: 'remo_t',
-              name: 'Remo T',
-              sets: [
-                { setNumber: 1, type: 'pesada', weight: 70, reps: 6, completed: true, isPR: true },
-                { setNumber: 2, type: 'pesada', weight: 70, reps: 6, completed: true, isPR: false },
-                { setNumber: 3, type: 'pesada', weight: 65, reps: 6, completed: true, isPR: false }
-              ]
-            }
-          ],
-          notes: 'Gran congestión en espalda. Dominadas muy sólidas con pausa abajo.'
-        }
-      ];
-    },
-
     generateSeedCoachChat: function() {
+      var userName = this.currentUser ? this.currentUser.name : 'Atleta';
       return [
         {
           id: 'msg_seed_c1',
           sender: 'coach',
-          authorName: 'Jose Perez',
+          authorName: 'Jose Perez (Head Coach)',
           avatar: 'assets/coach_photo.png',
-          text: '¡Hola! Bienvenido a tu app JPEREZCOACH tipo Hevy. Puedes usar la rotación de 6 días, o borrarla y subir tu propia rutina en PDF o crearla desde cero. Recuerda: en cada serie efectiva ve a RIR 0 con excéntricas de 5 segundos.',
-          timestamp: '2026-11-18T08:00:00.000Z'
+          text: '¡Hola ' + userName + '! Bienvenido a tu aplicación JPEREZCOACH PRO. Aquí tienes el registro de tus series en tiempo real, tu temporizador de descanso y tus rutinas personalizadas. Recuerda nuestra premisa: en cada serie efectiva ve a RIR 0 con bajadas controladas de 5 segundos. ¡A por todas!',
+          timestamp: new Date().toISOString()
         }
       ];
     },
@@ -509,9 +441,9 @@
           sender: 'user_carlos',
           authorName: 'Carlos M.',
           avatar: '',
-          text: '¡Equipo! Acabo de terminar sesión de piernas. Sentadilla Hack a 5s de bajada y las piernas están ardiendo 🔥🦁',
-          timestamp: '2026-11-18T10:30:00.000Z',
-          reactions: { '🔥': ['David Otero', 'Jose Perez'] }
+          text: '¡Equipo! Acabo de terminar la sesión de piernas. Sentadilla Hack a 5 segundos de bajada y la congestión es increíble 🔥🦁',
+          timestamp: new Date().toISOString(),
+          reactions: { '🔥': ['Carlos M.'] }
         }
       ];
     },
@@ -519,8 +451,8 @@
     exportAllData: function() {
       var backup = {
         exportedAt: new Date().toISOString(),
-        version: '3.0.0',
-        app: 'JPEREZCOACHAPP',
+        version: '4.0.0',
+        app: 'JPEREZCOACH PRO',
         user: this.currentUser,
         users: this.users,
         workoutHistory: this.workoutHistory,
@@ -539,7 +471,6 @@
         var data = JSON.parse(jsonString);
         if (data.workoutHistory) this.workoutHistory = data.workoutHistory;
         if (data.routines) this.routines = data.routines;
-        else if (data.customRoutines) this.routines = data.customRoutines;
         if (data.customExercises) this.customExercises = data.customExercises;
         if (data.user) this.currentUser = data.user;
         if (data.users) this.users = data.users;

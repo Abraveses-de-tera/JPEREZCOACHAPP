@@ -1,5 +1,5 @@
 // =============================================================================
-// JPEREZCOACH APP · MOTOR DE ENTRENAMIENTO EN VIVO (HEVY CORE ENGINE)
+// JPEREZCOACH PRO · MOTOR DE ENTRENAMIENTO EN VIVO
 // Cronómetro en vivo, registro serie a serie, temporizador de descanso y audio Web Audio
 // =============================================================================
 
@@ -359,7 +359,7 @@
       global.AppState.saveActiveWorkout();
     },
 
-    // Marcar / desmarcar serie completada (Hevy Checkmark Action)
+    // Marcar / desmarcar serie completada
     toggleSetCompleted: function(exerciseIndex, setIndex) {
       var active = this.getActiveWorkout();
       if (!active || !active.exercises[exerciseIndex]) return;
@@ -397,7 +397,7 @@
     },
 
     // -------------------------------------------------------------------------
-    // TEMPORIZADOR DE DESCANSO (REST TIMER HEVY STYLE)
+    // TEMPORIZADOR DE DESCANSO AUTOMÁTICO
     // -------------------------------------------------------------------------
     startRestTimer: function(seconds) {
       if (this.restInterval) clearInterval(this.restInterval);

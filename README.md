@@ -1,5 +1,5 @@
-# JPEREZCOACH PRO · Workout Tracker (Hevy Style V3)
-### Aplicación de Alta Intensidad · Subida de Rutinas en PDF · Creador y Exportador Dinámico
+# JPEREZCOACH PRO · Workout Tracker
+### Aplicación de Alta Intensidad · Personalización de Atleta · Rutinas en PDF · Creador y Exportador Dinámico
 **Repositorio Oficial:** [Abraveses-de-tera/JPEREZCOACHAPP](https://github.com/Abraveses-de-tera/JPEREZCOACHAPP)  
 **Enlace Web Directo (GitHub Pages):** [https://abraveses-de-tera.github.io/JPEREZCOACHAPP/](https://abraveses-de-tera.github.io/JPEREZCOACHAPP/)
 
@@ -7,29 +7,40 @@
 
 ## ⚡ Novedades Principales de esta Versión
 
-1. **📄 Subida e Importación Inteligente de Rutinas en PDF**:
-   - Sube cualquier rutina en archivo `.pdf` (arrastrar y soltar) o pega el texto directamente.
-   - El motor analiza y detecta automáticamente días, ejercicios, series, repeticiones y observaciones.
-   - Vinculación automática de ejercicios con la base de datos oficial y vídeos de técnica.
-   - Pantalla de previsualización antes de guardar en tu biblioteca.
+1. **🧙 Asistente de Personalización y Onboarding Interactivo**:
+   - Al abrir la aplicación, el asistente interactivo te guía en 3 pasos:
+     - **Paso 1: ¿Quién eres?**: Nombre, apellidos y apodo para personalizar tu seguimiento.
+     - **Paso 2: Métricas y Objetivo**: Peso corporal (kg), estatura (cm), objetivo (Hipertrofia, Fuerza Máxima, Definición, Rendimiento) y nivel de experiencia.
+     - **Paso 3: Vinculación de Rutina**: Elige adjuntar tu archivo en PDF, pegar texto plano, cargar la rotación oficial de 6 días de Jose Perez o empezar en blanco.
+   - Todo se almacena en local de forma segura, privada y sin necesidad de servidores externos.
 
-2. **📖 Guía de Formato PDF Integrada**:
+2. **📄 Subida e Importación Inteligente de Rutinas en PDF**:
+   - Sube cualquier rutina en archivo `.pdf` (arrastrar y soltar) o pega el texto directamente.
+   - El motor analiza y detecta automáticamente días, ejercicios, series, repeticiones y observaciones de intensidad (excéntricas en 5s, RIR 0, rest-pause).
+   - Vinculación automática de ejercicios con la base de datos oficial y vídeos de técnica.
+   - Pantalla de previsualización antes de guardar en tu biblioteca personal.
+
+3. **📖 Guía de Formato PDF Integrada**:
    - Sección interactiva en la app que explica exactamente cómo debe estructurarse el PDF para que el analizador lo entienda al 100%.
    - Ejemplo modelo con botón para copiarlo o usarlo directamente como plantilla.
 
-3. **🗑️ Rutinas 100% Dinámicas (Borrar, Guardar y Restaurar)**:
-   - La rutina inicial predeterminada (6 Días de Jose Perez para David Otero) ya no es fija: **puedes borrarla** si eres otro atleta y quieres tu propia rutina.
+4. **🗑️ Rutinas 100% Dinámicas (Borrar, Guardar y Restaurar)**:
+   - Las rutinas ya no son fijas para una sola persona: **puedes borrar cualquier rutina**, crear las tuyas o importar nuevas.
    - Puedes guardar tantas rutinas como desees en tu biblioteca personal.
-   - Botón **"🔄 Restaurar 6 Días Oficiales"** para recuperar el plan de Jose Perez en cualquier momento.
+   - Botón **"🔄 Restaurar 6 Días Oficiales"** para recuperar la plantilla de Jose Perez en cualquier momento.
 
-4. **📤 Exportación de Nuevas Rutinas (3 Formatos)**:
-   - **📄 Ficha PDF Imprimible**: Genera una hoja de entrenamiento profesional lista para imprimir o guardar como PDF en el teléfono.
-   - **📱 Mensaje Formateado para WhatsApp**: Texto con emojis, series y notas listo para enviar a tu entrenador o atleta en un toque.
+5. **📤 Exportación de Rutinas (3 Formatos)**:
+   - **📄 Ficha PDF Imprimible**: Genera una hoja de entrenamiento profesional lista para imprimir o guardar como PDF en tu dispositivo.
+   - **📱 Mensaje Formateado para WhatsApp**: Texto con emojis, series y notas listo para enviar a tu entrenador o compañero de entreno.
    - **💾 Archivo JSON**: Backup completo de la rutina para transferirla entre dispositivos.
+
+6. **👥 Gestión de Perfiles Locales (Sin Administración Forzada)**:
+   - Al ser una aplicación que corre localmente en el móvil o navegador del atleta, Jose Perez actúa estrictamente como **Head Coach** (ofreciendo su metodología, chat con IA especializada y contacto directo por WhatsApp al `+34 658 50 71 36`).
+   - El atleta tiene control total de su perfil, sus marcas personales y sus entrenamientos en su propio dispositivo.
 
 ---
 
-## 📖 Cómo debe estructurarse el PDF para que la App lo entienda al 100%
+## 📖 Cómo estructurar el PDF para que la App lo entienda al 100%
 
 El importador inteligente de **JPEREZCOACH PRO** procesa el texto estructurado del documento. Para una detección perfecta:
 
@@ -71,7 +82,7 @@ Puedes incluir entre paréntesis indicaciones que la app convertirá automática
 ### 📋 Ejemplo de Documento Modelo
 ```text
 PLAN DE ENTRENAMIENTO · JPEREZCOACH
-Atleta: David Otero | Objetivo: Hipertrofia
+Atleta: Marcos Ramos | Objetivo: Hipertrofia
 
 DÍA 1: PULL (Espalda y Bíceps)
 1. Dominadas/jalón: 3 series de 4-6 reps (Calienta 2/3 series y después busca series pesadas)
@@ -94,15 +105,15 @@ DÍA 2: PUSH (Pecho y Hombro)
 
 ## 🚀 Arquitectura Completa de la Aplicación
 
-- **🏋️‍♂️ Entrenar (Live Workout Hevy Style)**:
+- **🏋️‍♂️ Entrenar (Live Workout Tracker)**:
   - Registro serie a serie con valores anteriores (*Ghost values*).
   - Selector de series: Normal, Calentamiento (W), Drop Set (D), Fallo / RIR 0 (F).
   - Temporizador de descanso flotante automático con sonido y vibración.
   - Barra flotante minimizable que sigue activa mientras navegas por la app.
-  - Celebración con confeti al finalizar y resumen con nuevos récords (PRs).
+  - Celebración con confeti al finalizar y resumen con nuevos récords personales (PRs).
 - **📋 Rutinas Dinámicas**:
   - Creación manual, duplicación, edición de series/reps y borrado de cualquier rutina.
-  - Subida de archivos PDF o pegado de texto.
+  - Subida de archivos PDF o pegado de texto con previsualización interactiva.
   - Exportación individual a PDF imprimible, JSON o WhatsApp.
 - **💬 Chat Doble Canal**:
   - Canal con Jose Perez (Coach IA con su metodología) + enlace directo a WhatsApp (`+34 658 50 71 36`).
@@ -113,8 +124,9 @@ DÍA 2: PUSH (Pecho y Hombro)
   - Calculadora de 1RM con tabla de porcentajes de entrenamiento.
   - Salón de la Fama de PRs.
 - **👤 Perfil y Sesión**:
-  - Cuentas de demostración de 1 toque (David Otero, Jose Perez, Invitado).
+  - Gestión multiperfil de atletas en local.
   - Registro de atletas con peso, estatura, objetivo y racha activa.
+  - Asistente de personalización (Onboarding) reabrible en cualquier momento.
 
 ---
 

@@ -1,5 +1,5 @@
 /* =============================================================================
-   JPEREZCOACH PRO · ESTILOS HEVY APP DARK OBSIDIAN
+   JPEREZCOACH PRO · ESTILOS DARK OBSIDIAN
    Diseño de Alta Visibilidad para Gimnasio, Mobile-First PWA y Acentos Eléctricos
    ============================================================================= */
 
@@ -583,7 +583,7 @@ body.modal-open {
 }
 
 /* =============================================================================
-   BARRA FLOTANTE DE ENTRENO ACTIVO (STICKY WORKOUT BAR HEVY STYLE)
+   BARRA FLOTANTE DE ENTRENO ACTIVO (STICKY WORKOUT BAR)
    ============================================================================= */
 .sticky-workout-bar {
   position: fixed;
@@ -807,7 +807,7 @@ body.modal-open {
 }
 
 /* =============================================================================
-   TABLA DE SERIES HEVY STYLE (SETS TABLE)
+   TABLA DE SERIES (SETS TABLE)
    ============================================================================= */
 .active-exercise-card {
   background: var(--bg-card);
@@ -2742,5 +2742,181 @@ body.modal-open {
   }
   .app-header, .app-bottom-nav, .sticky-workout-bar, #floating-rest-timer {
     display: none !important;
+  }
+}
+
+
+/* =============================================================================
+   ESTILOS PARA ASISTENTE DE ONBOARDING Y PERSONALIZACIÓN DE ATLETA
+   ============================================================================= */
+.onboarding-dialog {
+  max-width: 620px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-cyan);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), var(--shadow-glow);
+}
+
+.onboarding-brand-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-coach-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 0 16px rgba(0, 210, 255, 0.3);
+}
+
+.onboarding-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.onboarding-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  max-width: 440px;
+}
+
+/* Barra de Pasos */
+.onboarding-steps-bar {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 1rem 0;
+  gap: 0.5rem;
+}
+
+.onboarding-step-indicator {
+  flex: 1;
+  text-align: center;
+  padding: 8px 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+}
+
+.onboarding-step-indicator.active {
+  background: rgba(0, 210, 255, 0.15);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.onboarding-step-indicator.completed {
+  border-color: var(--accent-emerald);
+  color: var(--accent-emerald);
+}
+
+/* Paneles de Pasos */
+.onboarding-panel {
+  display: none;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.onboarding-panel.active {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+.onboard-step-heading {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.onboard-step-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Opciones de Elección de Rutina */
+.routine-choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.routine-choice-card {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.routine-choice-card:hover {
+  border-color: var(--accent-sky);
+  background: var(--bg-card-hover);
+}
+
+.routine-choice-card.selected {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 210, 255, 0.1);
+  box-shadow: 0 0 16px rgba(0, 210, 255, 0.15);
+}
+
+.choice-icon {
+  font-size: 1.8rem;
+}
+
+.routine-choice-card strong {
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+.routine-choice-card p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Subpaneles interactivos dentro del Paso 3 */
+.onboard-routine-subpanel {
+  display: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.onboard-routine-subpanel.active {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Botones de navegación del onboarding */
+.onboarding-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .routine-choices-grid {
+    grid-template-columns: 1fr;
   }
 }

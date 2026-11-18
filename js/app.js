@@ -1,6 +1,6 @@
 // =============================================================================
 // JPEREZCOACH APP · CONTROLADOR PRINCIPAL Y GESTOR DE INTERFAZ DE USUARIO
-// Navegación, Rutinas Dinámicas, Importador de PDF, Exportador y Experiencia Hevy
+// Navegación, Rutinas Dinámicas, Importador de PDF, Exportador y Seguimiento PRO
 // =============================================================================
 
 (function(global) {
@@ -73,8 +73,12 @@
       this.bindEvents();
       this.initTabs();
       this.initPDFImporterEvents();
+      this.initOnboardingEvents();
       this.renderAll();
       this.initServiceWorker();
+      if (global.Onboarding) {
+        global.Onboarding.checkAndShow();
+      }
       return this;
     },
 
@@ -691,6 +695,148 @@
       }
 
       modal.classList.add('open');
+    },
+
+    // =========================================================================
+    // ASISTENTE DE PERSONALIZACIÓN Y ONBOARDING
+    // =========================================================================
+    initOnboardingEvents: function() {
+      var btnNext = document.getElementById('btn-onboarding-next');
+      var btnPrev = document.getElementById('btn-onboarding-prev');
+
+      if (btnNext) {
+        btnNext.addEventListener('click', function() {
+          if (global.Onboarding) global.Onboarding.nextStep();
+        });
+      }
+
+      if (btnPrev) {
+        btnPrev.addEventListener('click', function() {
+          if (global.Onboarding) global.Onboarding.prevStep();
+        });
+      }
+
+      // Tarjetas de elección de rutina en el onboarding
+      var choiceCards = document.querySelectorAll('.routine-choice-card');
+      var subpanelPdf = document.getElementById('onboard-subpanel-pdf');
+      var subpanelText = document.getElementById('onboard-subpanel-text');
+
+      choiceCards.forEach(function(card) {
+        card.addEventListener('click', function() {
+          choiceCards.forEach(function(c) { c.classList.remove('selected'); });
+          this.classList.add('selected');
+          var choice = this.getAttribute('data-choice');
+          if (global.Onboarding) {
+            global.Onboarding.athleteData.routineChoice = choice;
+          }
+
+          if (subpanelPdf) subpanelPdf.classList.toggle('active', choice === 'pdf');
+          if (subpanelText) subpanelText.classList.toggle('active', choice === 'text');
+        });
+      });
+
+      // Subida de PDF dentro del onboarding
+      var btnUploadPdfOnboard = document.getElementById('btn-onboard-upload-pdf-trigger');
+      var pdfSelectedStatus = document.getElementById('onboard-pdf-selected-status');
+
+      if (btnUploadPdfOnboard) {
+        btnUploadPdfOnboard.addEventListener('click', function() {
+          var fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = '.pdf';
+          fileInput.style.display = 'none';
+          document.body.appendChild(fileInput);
+
+          fileInput.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) {
+              if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
+              return;
+            }
+
+            if (pdfSelectedStatus) pdfSelectedStatus.textContent = '⏳ Analizando ' + file.name + '...';
+
+            if (global.PDFImporter) {
+              global.PDFImporter.extractTextFromPDF(file).then(function(extractedText) {
+                var parsed = global.PDFImporter.parseText(extractedText);
+                if (parsed.routines && parsed.routines.length > 0) {
+                  if (global.Onboarding) {
+                    global.Onboarding.athleteData.importedRoutines = parsed.routines;
+                  }
+                  if (pdfSelectedStatus) {
+                    pdfSelectedStatus.textContent = '✅ ' + parsed.routines.length + ' rutinas detectadas en ' + file.name;
+                  }
+                } else {
+                  if (pdfSelectedStatus) pdfSelectedStatus.textContent = '⚠️ No se detectaron días estructurados. Se creará vacía.';
+                }
+                if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
+              }).catch(function(err) {
+                if (pdfSelectedStatus) pdfSelectedStatus.textContent = '❌ Error al leer PDF: ' + err.message;
+                if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
+              });
+            }
+          };
+
+          fileInput.click();
+        });
+      }
+
+      // Input de texto plano en onboarding
+      var onboardPlainText = document.getElementById('onboard-plain-text');
+      if (onboardPlainText) {
+        onboardPlainText.addEventListener('input', function() {
+          var val = this.value;
+          if (val && val.trim().length > 10 && global.PDFImporter) {
+            var parsed = global.PDFImporter.parseText(val);
+            if (parsed.routines && parsed.routines.length > 0 && global.Onboarding) {
+              global.Onboarding.athleteData.importedRoutines = parsed.routines;
+            }
+          }
+        });
+      }
+    },
+
+    // Renderizar perfiles de atleta en modal auth
+    renderAuthProfilesList: function() {
+      var container = document.getElementById('auth-profiles-list');
+      if (!container) return;
+      var users = global.AuthService ? global.AuthService.getAllUsers() : [];
+      var current = global.AppState ? global.AppState.currentUser : null;
+
+      if (!users || users.length === 0) {
+        container.innerHTML = '<p class="text-dim" style="font-size: 0.85rem; padding: 0.5rem;">No hay atletas registrados aún.</p>';
+        return;
+      }
+
+      var html = '';
+      users.forEach(function(u) {
+        var isCurrent = current && current.id === u.id;
+        var initial = (u.name || 'A').charAt(0).toUpperCase();
+        var avatarHtml = u.avatar ? '<img src="' + u.avatar + '" alt="' + u.name + '">' : '<div class="avatar-placeholder">' + initial + '</div>';
+
+        html += '<button type="button" class="demo-user-card ' + (isCurrent ? 'active' : '') + '" data-user-id="' + u.id + '">';
+        html += avatarHtml;
+        html += '<div style="flex: 1; text-align: left;">';
+        html += '<strong>' + (u.name || 'Atleta') + (isCurrent ? ' (Activo)' : '') + '</strong>';
+        html += '<span>' + (u.role || u.goal || 'Atleta') + ' · ' + (u.weight || 75) + ' kg</span>';
+        html += '</div>';
+        html += '</button>';
+      });
+
+      container.innerHTML = html;
+
+      container.querySelectorAll('.demo-user-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var uId = this.getAttribute('data-user-id');
+          if (global.AuthService) {
+            global.AuthService.switchAccount(uId);
+            App.renderAuthProfilesList();
+            var modalAuth = document.getElementById('modal-auth');
+            if (modalAuth) modalAuth.classList.remove('open');
+            App.showToast('Sesión cambiada a: ' + (AppState.currentUser ? AppState.currentUser.name : ''));
+          }
+        });
+      });
     },
 
     // =========================================================================
@@ -1862,40 +2008,62 @@
       };
     }
 
-    // Auth modal
+    // Gestión de Atletas y Modal Auth
     var btnHeaderProfile = document.getElementById('btn-header-profile');
     var btnOpenAuth = document.getElementById('btn-open-auth-modal');
     var modalAuth = document.getElementById('modal-auth');
     var btnCloseAuth = document.getElementById('btn-close-auth');
+    var btnEditProfile = document.getElementById('btn-edit-profile-modal');
+    var btnOpenOnboardAuth = document.getElementById('btn-open-onboarding-from-auth');
 
-    function openAuth() { if (modalAuth) modalAuth.classList.add('open'); }
-    function closeAuth() { if (modalAuth) modalAuth.classList.remove('open'); }
+    function openAuth() {
+      if (modalAuth) {
+        modalAuth.classList.add('open');
+        App.renderAuthProfilesList();
+      }
+    }
+    function closeAuth() {
+      if (modalAuth) modalAuth.classList.remove('open');
+    }
 
     if (btnHeaderProfile) btnHeaderProfile.onclick = openAuth;
     if (btnOpenAuth) btnOpenAuth.onclick = openAuth;
     if (btnCloseAuth) btnCloseAuth.onclick = closeAuth;
 
-    document.querySelectorAll('.demo-user-card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        var uId = this.getAttribute('data-user-id');
-        AuthService.switchAccount(uId);
-        document.querySelectorAll('.demo-user-card').forEach(function(c) { c.classList.remove('active'); });
-        this.classList.add('active');
+    if (btnEditProfile) {
+      btnEditProfile.onclick = function() {
+        if (global.Onboarding) {
+          global.Onboarding.open();
+        }
+      };
+    }
+
+    if (btnOpenOnboardAuth) {
+      btnOpenOnboardAuth.onclick = function() {
         closeAuth();
-        App.showToast('Sesión cambiada a: ' + (AppState.currentUser ? AppState.currentUser.name : ''));
-      });
-    });
+        if (global.Onboarding) {
+          global.Onboarding.open();
+        }
+      };
+    }
 
     var registerForm = document.getElementById('auth-register-form');
     if (registerForm) {
       registerForm.onsubmit = function(e) {
         e.preventDefault();
-        var name = document.getElementById('reg-name').value;
-        var email = document.getElementById('reg-email').value;
-        var weight = document.getElementById('reg-weight').value;
-        var height = document.getElementById('reg-height').value;
+        var nameEl = document.getElementById('reg-name');
+        var usernameEl = document.getElementById('reg-username');
+        var weightEl = document.getElementById('reg-weight');
+        var heightEl = document.getElementById('reg-height');
+        var goalEl = document.getElementById('reg-goal');
 
-        var res = AuthService.register({ name: name, email: email, weight: weight, height: height });
+        var name = nameEl ? nameEl.value : '';
+        var username = usernameEl ? usernameEl.value : '';
+        var weight = weightEl ? weightEl.value : '75';
+        var height = heightEl ? heightEl.value : '175';
+        var goal = goalEl ? goalEl.value : 'Hipertrofia';
+
+        var res = AuthService.register({ name: name, username: username, weight: weight, height: height, goal: goal });
         if (res.success) {
           closeAuth();
           App.showToast('¡Bienvenido, ' + res.user.name + '!');

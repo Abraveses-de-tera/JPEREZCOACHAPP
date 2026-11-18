@@ -1,6 +1,6 @@
 // =============================================================================
 // JPEREZCOACH APP · ANALÍTICA, HISTORIAL, RECORDS PERSONALES Y HERRAMIENTAS GYM
-// Heatmap de actividad estilo GitHub/Hevy, Calculadora de Discos y Calculadora 1RM
+// Heatmap de actividad, Calculadora de Discos y Calculadora 1RM
 // =============================================================================
 
 (function(global) {

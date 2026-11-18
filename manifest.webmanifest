@@ -1,7 +1,7 @@
 {
   "name": "JPEREZCOACH PRO · Workout Tracker",
   "short_name": "JPEREZCOACH",
-  "description": "Aplicación de seguimiento y entrenamiento de alta intensidad estilo Hevy para JPEREZCOACH.",
+  "description": "Aplicación de seguimiento y entrenamiento de alta intensidad serie a serie para JPEREZCOACH.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#080c14",
