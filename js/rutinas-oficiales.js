@@ -569,7 +569,8 @@
 
       txt += '\n━━━━━━━━━━━━━━━━━━━━\n';
       txt += '⚡ _Metodología JPEREZ: Series a RIR 0 y excéntricas controladas en 5s._\n';
-      txt += '📱 jperezcoach.com · +34 658 50 71 36';
+      txt += '📲 JPEREZCOACH PRO: https://abraveses-de-tera.github.io/JPEREZCOACHAPP/\n';
+      txt += '📱 WhatsApp Coach: +34 658 50 71 36';
 
       return txt;
     },

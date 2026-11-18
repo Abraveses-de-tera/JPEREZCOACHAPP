@@ -2072,5 +2072,15 @@
         }
       };
     }
+
+    // Compartir App por WhatsApp con vista previa de tarjeta personal
+    var btnShareAppWa = document.getElementById('btn-share-app-wa');
+    if (btnShareAppWa) {
+      btnShareAppWa.addEventListener('click', function() {
+        var text = '🔥 Entrena con la aplicación oficial de Jose Perez (JPEREZCOACH PRO): Rutinas en PDF, series a RIR 0, excéntricas en 5s y chat directo con el Coach.\n\n👉 https://abraveses-de-tera.github.io/JPEREZCOACHAPP/';
+        var url = 'https://wa.me/?text=' + encodeURIComponent(text);
+        window.open(url, '_blank');
+      });
+    }
   });
 })(window);

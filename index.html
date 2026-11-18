@@ -12,16 +12,33 @@
   <title>JPEREZCOACH PRO · Workout Tracker</title>
 
   <!-- Favicons y Manifest PWA -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="JPEREZCOACH PRO · Workout Tracker">
-  <meta property="og:description" content="Entrena con la metodología de Jose Perez. Rutinas en PDF, registro en vivo, chat y analítica.">
-  <meta property="og:image" content="og-image.jpg">
+  <!-- Open Graph / WhatsApp Preview -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="JPEREZCOACH">
+  <meta property="og:url" content="https://abraveses-de-tera.github.io/JPEREZCOACHAPP/">
+  <meta property="og:title" content="JPEREZCOACH PRO · Head Coach Jose Perez">
+  <meta property="og:description" content="Entrena con la metodología oficial de Jose Perez: Rutinas en PDF, registro en vivo a RIR 0, excéntricas en 5s, analítica y chat directo con el Coach.">
+  <meta property="og:image" content="https://abraveses-de-tera.github.io/JPEREZCOACHAPP/og-image.jpg">
+  <meta property="og:image:secure_url" content="https://abraveses-de-tera.github.io/JPEREZCOACHAPP/og-image.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Jose Perez · JPEREZCOACH PRO">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JPEREZCOACH PRO · Head Coach Jose Perez">
+  <meta name="twitter:description" content="Entrena con la metodología oficial de Jose Perez: Rutinas en PDF, registro en vivo a RIR 0, excéntricas en 5s y chat directo.">
+  <meta name="twitter:image" content="https://abraveses-de-tera.github.io/JPEREZCOACHAPP/og-image.jpg">
+
+  <!-- Link preview fallback para WhatsApp / Telegram -->
+  <link rel="image_src" href="https://abraveses-de-tera.github.io/JPEREZCOACHAPP/og-image.jpg">
 
   <!-- Estilos CSS -->
   <link rel="stylesheet" href="styles.css">
@@ -392,6 +409,20 @@
               🌐 <strong>Web:</strong> jperezcoach.com
             </a>
           </div>
+        </div>
+
+        <!-- Tarjeta para compartir la app por WhatsApp con ficha personal de Jose Perez -->
+        <div class="gym-tool-card share-app-tool-card" style="margin-top: 1.25rem;">
+          <div class="tool-card-header">
+            <div class="tool-icon">📱</div>
+            <div>
+              <h4>Compartir JPEREZCOACH por WhatsApp</h4>
+              <p>Envía la aplicación a tus compañeros con la tarjeta oficial y foto de Jose Perez.</p>
+            </div>
+          </div>
+          <button type="button" class="btn btn-wa-direct btn-block btn-large" id="btn-share-app-wa">
+            💬 Compartir Aplicación por WhatsApp ➔
+          </button>
         </div>
 
       </div>

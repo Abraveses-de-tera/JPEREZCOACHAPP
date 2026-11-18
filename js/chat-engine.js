@@ -224,7 +224,7 @@
         var last = history[0];
         text += ' Acabo de finalizar mi entreno de ' + last.name + ' con ' + last.totalVolumeKg + ' kg de volumen total.';
       }
-      text += ' ¿Cómo lo ves? ¡Un saludo!';
+      text += ' ¿Cómo lo ves? ¡Un saludo!\n\n📲 https://abraveses-de-tera.github.io/JPEREZCOACHAPP/';
 
       return 'https://wa.me/' + phone + '?text=' + encodeURIComponent(text);
     }
