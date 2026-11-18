@@ -1,8 +1,8 @@
 // =============================================================================
-// JPEREZCOACH APP · SERVICE WORKER (OFFLINE PWA CACHE V4.1)
+// JPEREZCOACH APP · SERVICE WORKER (OFFLINE PWA CACHE V4.2)
 // =============================================================================
 
-const CACHE_NAME = 'jperezcoach-v4.1.0';
+const CACHE_NAME = 'jperezcoach-v4.2.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

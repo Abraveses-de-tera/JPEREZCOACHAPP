@@ -58,10 +58,16 @@
 
       var baseEx = global.EjerciciosDB ? global.EjerciciosDB.getById(exerciseId) : null;
       var name = baseEx ? baseEx.nombre : 'Ejercicio';
+      var videoId = baseEx ? baseEx.youtubeId : '';
+      if (!videoId && global.EjerciciosDB) {
+        videoId = global.EjerciciosDB.getVideoForExercise(exerciseId) || '';
+      }
 
       this.currentDraft.ejercicios.push({
         exerciseId: exerciseId,
         name: name,
+        group: baseEx ? baseEx.grupo : 'General',
+        youtubeId: videoId,
         targetReps: '8-10',
         notes: baseEx ? baseEx.descripcion : '',
         defaultSets: [

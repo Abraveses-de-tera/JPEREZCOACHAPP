@@ -14,13 +14,19 @@
      - **Paso 3: Vinculación de Rutina**: Elige adjuntar tu archivo en PDF, pegar texto plano, cargar la rotación oficial de 6 días de Jose Perez o empezar en blanco.
    - Todo se almacena en local de forma segura, privada y sin necesidad de servidores externos.
 
-2. **📄 Subida e Importación Inteligente de Rutinas en PDF**:
+2. **📄 Subida e Importación Inteligente de Rutinas con Asignación Automática de Vídeos**:
    - Sube cualquier rutina en archivo `.pdf` (arrastrar y soltar) o pega el texto directamente.
-   - El motor analiza y detecta automáticamente días, ejercicios, series, repeticiones y observaciones de intensidad (excéntricas en 5s, RIR 0, rest-pause).
-   - Vinculación automática de ejercicios con la base de datos oficial y vídeos de técnica.
-   - Pantalla de previsualización antes de guardar en tu biblioteca personal.
+   - **🎬 Base de Datos y Videoteca Maestra (140+ Ejercicios)**: Motor de emparejamiento semántico inteligente (alias, sinónimos biomecánicos, overlap de tokens y fallback de patrones).
+   - **Vinculación 100% de Vídeos**: Al importar una rutina nueva, la app empareja automáticamente cada ejercicio con su vídeo demostrativo HD de YouTube y directrices técnicas oficiales de Jose Perez (excéntricas en 5s, RIR 0, tempo y rango de recorrido).
+   - **Previsualización Interactiva con Selector de Vídeo**: En la pantalla de previsualización antes de guardar, puedes reproducir el vídeo asignado con 1 toque o cambiarlo/asignar uno personalizado pegando cualquier enlace o buscando en el catálogo.
+   - **Persistencia de Vídeos Personalizados**: Tus elecciones de vídeo se recuerdan para siempre en tu dispositivo.
 
-3. **📖 Guía de Formato PDF Integrada**:
+3. **📚 Videoteca Oficial y Catálogo de Ejercicios (140+ Ejercicios)**:
+   - Sección dedicada accesible desde la pestaña de Rutinas para explorar los 140+ ejercicios ordenados por grupos musculares (*Pecho, Espalda, Pierna, Hombro, Bíceps, Tríceps, Abdomen*).
+   - Búsqueda en tiempo real por nombre, equipamiento o alias.
+   - Reproducción instantánea de técnica oficial y opción de asociar enlaces personalizados de YouTube.
+
+4. **📖 Guía de Formato PDF Integrada**:
    - Sección interactiva en la app que explica exactamente cómo debe estructurarse el PDF para que el analizador lo entienda al 100%.
    - Ejemplo modelo con botón para copiarlo o usarlo directamente como plantilla.
 

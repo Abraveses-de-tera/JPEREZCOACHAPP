@@ -272,20 +272,26 @@
       // Si el nombre quedó vacío o contiene patrones de series, reajustar
       if (!nombreEjercicio || nombreEjercicio.length < 3) return null;
 
-      // Buscar emparejamiento en la base de datos de ejercicios
-      var matchDB = this.matchExerciseWithDatabase(nombreEjercicio);
+      // Buscar emparejamiento con el motor inteligente de EjerciciosDB
+      var matchResult = global.EjerciciosDB ? global.EjerciciosDB.findBestMatch(nombreEjercicio) : null;
+      var matchDB = matchResult ? matchResult.exercise : this.matchExerciseWithDatabase(nombreEjercicio);
+      var videoId = matchResult ? matchResult.youtubeId : (matchDB ? matchDB.youtubeId : '');
+      var isApprox = matchResult ? !!matchResult.isApproximate : false;
 
       // Determinar número de series y repeticiones
       var parsedSets = this.parseSetsAndReps(indicaciones || cleanLine);
 
       return {
         exerciseId: matchDB ? matchDB.id : ('ex_imp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
-        name: matchDB ? matchDB.nombre : nombreEjercicio,
+        name: nombreEjercicio,
+        matchedName: matchDB ? matchDB.nombre : '',
         targetReps: parsedSets.repsTarget || '8-10',
         notes: indicaciones || (matchDB ? matchDB.descripcion : ''),
         matchedId: matchDB ? matchDB.id : null,
-        youtubeId: matchDB ? matchDB.youtubeId : '',
+        youtubeId: videoId,
         group: matchDB ? matchDB.grupo : 'General',
+        matchConfidence: matchResult ? matchResult.confidence : (matchDB ? 0.9 : 0),
+        isApproximate: isApprox,
         defaultSets: parsedSets.sets
       };
     },
@@ -293,6 +299,9 @@
     // Emparejar nombre de ejercicio con EjerciciosDB
     matchExerciseWithDatabase: function(rawName) {
       if (!global.EjerciciosDB) return null;
+      var matchRes = global.EjerciciosDB.findBestMatch(rawName);
+      if (matchRes && matchRes.exercise) return matchRes.exercise;
+
       var norm = normalizarTexto(rawName);
 
       // 1. Comprobar diccionario de sinónimos

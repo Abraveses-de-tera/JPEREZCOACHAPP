@@ -1269,6 +1269,95 @@ DÍA 2: PUSH (Pecho y Hombro)
     </div>
   </div>
 
+  <!-- =========================================================================
+       MODAL: ASIGNAR O CAMBIAR VÍDEO DE EJERCICIO
+       ========================================================================= -->
+  <div id="modal-assign-video" class="modal-dialog-overlay">
+    <div class="modal-dialog-content assign-video-dialog">
+      <div class="modal-dialog-header">
+        <div>
+          <h3>🎬 Asignar Vídeo de Técnica</h3>
+          <p id="assign-video-target-name" class="assign-video-subtitle">Ejercicio</p>
+        </div>
+        <button class="btn-close-modal" id="btn-close-assign-video">✕</button>
+      </div>
+
+      <div class="assign-video-body">
+        <!-- Sugerencias automáticas inteligentes -->
+        <div class="assign-suggestions-box" id="assign-suggestions-container">
+          <label class="assign-section-label">💡 Ejercicios recomendados de la base de datos:</label>
+          <div id="assign-suggestions-chips" class="assign-suggestions-chips-grid"></div>
+        </div>
+
+        <div class="assign-divider-or"><span>o selecciona del catálogo</span></div>
+
+        <!-- Selector manual de la base de datos -->
+        <div class="form-group">
+          <label for="assign-select-database-ex">Seleccionar del catálogo oficial (140+ ejercicios):</label>
+          <select id="assign-select-database-ex" class="form-control">
+            <!-- Rellenado dinámicamente -->
+          </select>
+        </div>
+
+        <div class="assign-divider-or"><span>o pega tu propio enlace</span></div>
+
+        <!-- Enlace personalizado de YouTube -->
+        <div class="form-group">
+          <label for="assign-custom-youtube-input">Enlace o ID de YouTube personalizado:</label>
+          <div class="assign-url-input-wrap">
+            <input type="text" id="assign-custom-youtube-input" class="form-control" placeholder="https://youtu.be/... o código de 11 caracteres">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-test-custom-video">▶️ Probar</button>
+          </div>
+          <small class="text-dim">Acepta enlaces directos de YouTube, Shorts, youtu.be o códigos de vídeo.</small>
+        </div>
+
+        <div class="form-group-checkbox" style="margin-top: 1rem;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text-main);">
+            <input type="checkbox" id="assign-remember-future" checked style="accent-color: var(--accent-sky);">
+            <span>Recordar esta asignación para siempre en futuras importaciones</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-dialog-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-assign-video">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-confirm-assign-video">✅ Confirmar Asignación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: VIDEOTECA Y BASE DE DATOS MAESTRA DE EJERCICIOS (140+ EJERCICIOS)
+       ========================================================================= -->
+  <div id="modal-exercise-library" class="modal-dialog-overlay">
+    <div class="modal-dialog-content exercise-library-dialog">
+      <div class="modal-dialog-header">
+        <div>
+          <h3>📚 Videoteca y Catálogo de Ejercicios</h3>
+          <span class="badge-role">140+ Ejercicios con Técnica Oficial</span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-exercise-library">✕</button>
+      </div>
+
+      <div class="library-search-toolbar">
+        <div class="library-search-wrap">
+          <input type="text" id="library-search-input" class="form-control" placeholder="🔍 Buscar por nombre, alias, músculo o equipamiento...">
+        </div>
+        <div id="library-group-chips" class="library-filter-chips">
+          <!-- Chips de grupos musculares -->
+        </div>
+      </div>
+
+      <div class="library-stats-bar">
+        <span id="library-counter-label" class="text-dim" style="font-size: 0.85rem;">Mostrando ejercicios...</span>
+      </div>
+
+      <div id="library-exercises-grid" class="library-cards-container">
+        <!-- Renderizado dinámicamente -->
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST DE NOTIFICACIONES -->
   <div id="app-toast" class="app-toast"></div>
 

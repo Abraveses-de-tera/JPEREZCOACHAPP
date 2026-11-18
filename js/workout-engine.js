@@ -155,9 +155,17 @@
       var workoutExercises = [];
       if (routine.ejercicios && routine.ejercicios.length > 0) {
         workoutExercises = routine.ejercicios.map(function(item) {
-          var baseEx = global.EjerciciosDB ? global.EjerciciosDB.getById(item.exerciseId) : null;
-          var exName = item.name || (baseEx ? baseEx.nombre : 'Ejercicio');
+          var baseEx = global.EjerciciosDB ? (global.EjerciciosDB.getById(item.exerciseId) || global.EjerciciosDB.getById(item.matchedId)) : null;
+          if (!baseEx && global.EjerciciosDB && (item.name || item.nombre)) {
+            var matchRes = global.EjerciciosDB.findBestMatch(item.name || item.nombre);
+            if (matchRes && matchRes.exercise) baseEx = matchRes.exercise;
+          }
+          var exName = item.name || item.nombre || (baseEx ? baseEx.nombre : 'Ejercicio');
           var lastSession = global.AppState ? global.AppState.getLastSessionForExercise(item.exerciseId) : null;
+          var videoId = item.youtubeId || (baseEx ? baseEx.youtubeId : '');
+          if (!videoId && global.EjerciciosDB) {
+            videoId = global.EjerciciosDB.getVideoForExercise(item) || '';
+          }
 
           var sets = [];
           if (item.defaultSets && item.defaultSets.length > 0) {
@@ -192,10 +200,10 @@
           }
 
           return {
-            exerciseId: item.exerciseId,
+            exerciseId: item.exerciseId || (baseEx ? baseEx.id : ('ex_' + Date.now())),
             name: exName,
-            group: baseEx ? baseEx.grupo : 'General',
-            youtubeId: baseEx ? baseEx.youtubeId : '',
+            group: (baseEx && baseEx.grupo) ? baseEx.grupo : (item.group || 'General'),
+            youtubeId: videoId,
             notes: item.notes || (baseEx ? baseEx.descripcion : ''),
             sets: sets
           };
@@ -268,6 +276,10 @@
       var baseEx = global.EjerciciosDB ? global.EjerciciosDB.getById(exerciseId) : null;
       var name = baseEx ? baseEx.nombre : 'Ejercicio';
       var lastSession = global.AppState ? global.AppState.getLastSessionForExercise(exerciseId) : null;
+      var videoId = baseEx ? baseEx.youtubeId : '';
+      if (!videoId && global.EjerciciosDB) {
+        videoId = global.EjerciciosDB.getVideoForExercise(exerciseId) || '';
+      }
 
       var sets = [];
       for (var i = 1; i <= 3; i++) {
@@ -295,7 +307,7 @@
         exerciseId: exerciseId,
         name: name,
         group: baseEx ? baseEx.grupo : 'General',
-        youtubeId: baseEx ? baseEx.youtubeId : '',
+        youtubeId: videoId,
         notes: baseEx ? baseEx.descripcion : '',
         sets: sets
       });

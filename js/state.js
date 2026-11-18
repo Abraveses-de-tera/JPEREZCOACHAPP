@@ -18,7 +18,8 @@
     SETTINGS: 'jperez_app_settings_v4',
     PRS: 'jperez_personal_records_v4',
     ONBOARDING: 'jperez_onboarding_completed_v4',
-    MEASUREMENTS: 'jperez_body_measurements_v4'
+    MEASUREMENTS: 'jperez_body_measurements_v4',
+    EXERCISE_VIDEOS: 'jperez_exercise_videos_v4'
   };
 
   var DEFAULT_SETTINGS = {
@@ -44,6 +45,7 @@
     prs: {},
     hasCompletedOnboarding: false,
     bodyMeasurements: [],
+    exerciseVideos: {},
 
     init: function() {
       this.loadSettings();
@@ -52,6 +54,7 @@
       this.loadWorkoutHistory();
       this.loadRoutines();
       this.loadCustomExercises();
+      this.loadExerciseVideos();
       this.loadChats();
       this.loadPRs();
       this.loadBodyMeasurements();
@@ -288,6 +291,39 @@
       return exercise;
     },
 
+    loadExerciseVideos: function() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEYS.EXERCISE_VIDEOS);
+        this.exerciseVideos = raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        this.exerciseVideos = {};
+      }
+    },
+
+    saveExerciseVideos: function() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.EXERCISE_VIDEOS, JSON.stringify(this.exerciseVideos));
+        document.dispatchEvent(new CustomEvent('jperez:exercise-videos-updated', { detail: this.exerciseVideos }));
+      } catch (e) {}
+    },
+
+    setExerciseVideo: function(exerciseKey, youtubeId) {
+      if (!exerciseKey) return;
+      var key = exerciseKey.toString().trim();
+      if (!this.exerciseVideos) this.exerciseVideos = {};
+      if (youtubeId) {
+        this.exerciseVideos[key] = youtubeId.trim();
+        // Guardar también con clave normalizada para búsquedas insensibles
+        var normKey = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (normKey && normKey !== key) {
+          this.exerciseVideos[normKey] = youtubeId.trim();
+        }
+      } else {
+        delete this.exerciseVideos[key];
+      }
+      this.saveExerciseVideos();
+    },
+
     loadChats: function() {
       try {
         var coachRaw = localStorage.getItem(STORAGE_KEYS.CHAT_COACH);
@@ -512,7 +548,8 @@
         settings: this.settings,
         chatCoach: this.chatCoach,
         chatTeam: this.chatTeam,
-        bodyMeasurements: this.bodyMeasurements
+        bodyMeasurements: this.bodyMeasurements,
+        exerciseVideos: this.exerciseVideos
       };
       return JSON.stringify(backup, null, 2);
     },
@@ -529,11 +566,13 @@
         if (data.chatCoach) this.chatCoach = data.chatCoach;
         if (data.chatTeam) this.chatTeam = data.chatTeam;
         if (data.bodyMeasurements) this.bodyMeasurements = data.bodyMeasurements;
+        if (data.exerciseVideos) this.exerciseVideos = data.exerciseVideos;
 
         this.saveCurrentUser();
         this.saveWorkoutHistory();
         this.saveRoutines();
         this.saveCustomExercises();
+        this.saveExerciseVideos();
         this.saveSettings();
         this.saveChats();
         this.saveBodyMeasurements();

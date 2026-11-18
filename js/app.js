@@ -395,6 +395,8 @@
 
       // Barra de utilidades: Restaurar oficiales / Borrar todo / Guía
       html += '<div class="routines-toolbar-banner">' +
+        '<button class="btn-toolbar-link" id="btn-open-exercise-library">🎬 Videoteca y Catálogo (140+)</button>' +
+        '<span class="toolbar-sep">·</span>' +
         '<button class="btn-toolbar-link" id="btn-open-guide-from-tab">📖 Ver Guía de Formato PDF</button>' +
         '<span class="toolbar-sep">·</span>' +
         '<button class="btn-toolbar-link" id="btn-restore-default-plan">🔄 Restaurar 6 Días Oficiales</button>' +
@@ -428,6 +430,9 @@
 
       var btnOpenGuide = document.getElementById('btn-open-guide-from-tab');
       if (btnOpenGuide) btnOpenGuide.onclick = function() { self.openFormatGuideModal(); };
+
+      var btnLibrary = document.getElementById('btn-open-exercise-library');
+      if (btnLibrary) btnLibrary.onclick = function() { self.openExerciseLibraryModal(); };
 
       var btnRestore = document.getElementById('btn-restore-default-plan');
       if (btnRestore) {
@@ -607,16 +612,32 @@
           '<div class="day-exercises-table">';
 
         dia.ejercicios.forEach(function(ex, eIdx) {
-          var matchedPill = ex.matchedId ? '<span class="pill-matched" title="Vinculado al catálogo oficial">🎬 Vídeo Verificado</span>' : '<span class="pill-unmatched">Nuevo Ejercicio</span>';
+          var videoBtn = '';
+          var matchedPill = '';
+          if (ex.youtubeId) {
+            videoBtn = '<button type="button" class="btn-video-chip btn-preview-import-video" data-day="' + dIdx + '" data-ex="' + eIdx + '" data-yt="' + ex.youtubeId + '" title="Ver vídeo de técnica">🎬 Ver Vídeo</button>';
+            matchedPill = '<span class="pill-video-matched ' + (ex.isApproximate ? 'approximate' : '') + '">' + (ex.isApproximate ? '⚠️ Vídeo sugerido' : '✅ Vídeo verificado') + '</span>';
+          } else {
+            matchedPill = '<span class="pill-video-missing">⚠️ Sin vídeo</span>';
+          }
 
-          html += '<div class="import-ex-row">' +
+          var changeBtn = '<button type="button" class="btn-change-import-video" data-day="' + dIdx + '" data-ex="' + eIdx + '" title="Cambiar vídeo o buscar en el catálogo">✏️ Cambiar Vídeo</button>';
+
+          html += '<div class="import-ex-row" data-day="' + dIdx + '" data-ex="' + eIdx + '">' +
             '<div class="import-ex-info">' +
-              '<strong>' + (eIdx + 1) + '. ' + ex.name + '</strong>' +
+              '<div class="import-ex-title-row">' +
+                '<strong>' + (eIdx + 1) + '. ' + ex.name + '</strong>' +
+                (ex.matchedName && ex.matchedName !== ex.name ? '<span class="import-ex-matched-label">↳ ' + ex.matchedName + '</span>' : '') +
+              '</div>' +
               (ex.notes ? '<p class="import-ex-notes">🎯 ' + ex.notes + '</p>' : '') +
+              '<div class="import-video-status-row">' +
+                videoBtn +
+                matchedPill +
+                changeBtn +
+              '</div>' +
             '</div>' +
             '<div class="import-ex-meta">' +
               '<span>' + (ex.defaultSets ? ex.defaultSets.length : 3) + ' series × ' + ex.targetReps + '</span>' +
-              matchedPill +
             '</div>' +
           '</div>';
         });
@@ -627,6 +648,34 @@
       if (bodyEl) bodyEl.innerHTML = html;
 
       var self = this;
+
+      // Eventos para ver y cambiar vídeos en la previsualización
+      if (bodyEl) {
+        bodyEl.querySelectorAll('.btn-preview-import-video').forEach(function(btn) {
+          btn.onclick = function() {
+            var dIdx = parseInt(this.getAttribute('data-day'), 10);
+            var eIdx = parseInt(this.getAttribute('data-ex'), 10);
+            var yt = this.getAttribute('data-yt');
+            var ex = parsedResult.dias[dIdx].ejercicios[eIdx];
+            var baseEx = global.EjerciciosDB ? global.EjerciciosDB.getById(ex.matchedId || ex.exerciseId) : null;
+            self.showVideoModal({
+              nombre: ex.name,
+              grupo: ex.group,
+              youtubeId: yt,
+              tips: (baseEx && baseEx.tips) ? baseEx.tips : [ex.notes || 'Excéntrico en 5s a RIR 0.']
+            });
+          };
+        });
+
+        bodyEl.querySelectorAll('.btn-change-import-video').forEach(function(btn) {
+          btn.onclick = function() {
+            var dIdx = parseInt(this.getAttribute('data-day'), 10);
+            var eIdx = parseInt(this.getAttribute('data-ex'), 10);
+            self.openAssignVideoModal(dIdx, eIdx);
+          };
+        });
+      }
+
       var btnConfirm = document.getElementById('btn-confirm-import-routine');
       if (btnConfirm) {
         btnConfirm.onclick = function() {
@@ -637,7 +686,7 @@
           });
 
           modal.classList.remove('open');
-          self.showToast('¡' + parsedResult.totalDias + ' rutina(s) guardadas en tu aplicación!');
+          self.showToast('¡' + parsedResult.totalDias + ' rutina(s) guardadas con vídeos asociados!');
           self.renderWorkoutTab();
           self.renderRoutinesTab();
         };
@@ -653,6 +702,239 @@
           self.openPDFImporterModal();
         };
       }
+
+      modal.classList.add('open');
+    },
+
+    // Modal para asignar o cambiar vídeo a un ejercicio importado
+    openAssignVideoModal: function(dayIndex, exIndex) {
+      var self = this;
+      var modal = document.getElementById('modal-assign-video');
+      if (!modal || !this.parsedImportResult) return;
+
+      var dia = this.parsedImportResult.dias[dayIndex];
+      if (!dia) return;
+      var ex = dia.ejercicios[exIndex];
+      if (!ex) return;
+
+      var nameLabel = document.getElementById('assign-video-target-name');
+      if (nameLabel) nameLabel.textContent = (exIndex + 1) + '. ' + ex.name + ' (' + (ex.group || 'General') + ')';
+
+      // 1. Sugerencias inteligentes de la base de datos
+      var suggestionsWrap = document.getElementById('assign-suggestions-chips');
+      var closest = global.EjerciciosDB ? global.EjerciciosDB.getClosestMatches(ex.name, 4) : [];
+      if (suggestionsWrap) {
+        var sHtml = '';
+        closest.forEach(function(cand) {
+          sHtml += '<button type="button" class="suggestion-chip" data-id="' + cand.id + '" data-yt="' + cand.youtubeId + '" data-name="' + cand.nombre + '">' +
+            '👉 ' + cand.nombre + ' <span style="font-size: 0.7rem; opacity: 0.7;">(' + cand.grupo + ')</span>' +
+          '</button>';
+        });
+        suggestionsWrap.innerHTML = sHtml;
+
+        suggestionsWrap.querySelectorAll('.suggestion-chip').forEach(function(chip) {
+          chip.onclick = function() {
+            var candId = this.getAttribute('data-id');
+            var candYt = this.getAttribute('data-yt');
+            var candName = this.getAttribute('data-name');
+            var sel = document.getElementById('assign-select-database-ex');
+            if (sel) sel.value = candId;
+            var customIn = document.getElementById('assign-custom-youtube-input');
+            if (customIn) customIn.value = candYt;
+          };
+        });
+      }
+
+      // 2. Llenar el selector completo de la base de datos
+      var selectEx = document.getElementById('assign-select-database-ex');
+      if (selectEx && global.EjerciciosDB) {
+        var all = global.EjerciciosDB.getAll();
+        var groups = {};
+        all.forEach(function(item) {
+          var g = item.grupo || 'Otros';
+          if (!groups[g]) groups[g] = [];
+          groups[g].push(item);
+        });
+
+        var optHtml = '<option value="">-- Elige un ejercicio de la base de datos --</option>';
+        Object.keys(groups).sort().forEach(function(grp) {
+          optHtml += '<optgroup label="' + grp + '">';
+          groups[grp].forEach(function(item) {
+            var isSel = (ex.matchedId === item.id || ex.exerciseId === item.id) ? ' selected' : '';
+            optHtml += '<option value="' + item.id + '" data-yt="' + item.youtubeId + '" data-name="' + item.nombre + '"' + isSel + '>' + item.nombre + ' (' + item.equipo + ')</option>';
+          });
+          optHtml += '</optgroup>';
+        });
+        selectEx.innerHTML = optHtml;
+
+        selectEx.onchange = function() {
+          var opt = this.options[this.selectedIndex];
+          var yt = opt ? opt.getAttribute('data-yt') : '';
+          var customIn = document.getElementById('assign-custom-youtube-input');
+          if (customIn && yt) customIn.value = yt;
+        };
+      }
+
+      // 3. Campo de YouTube personalizado
+      var customInput = document.getElementById('assign-custom-youtube-input');
+      if (customInput) {
+        customInput.value = ex.youtubeId || '';
+      }
+
+      // Botón probar vídeo
+      var btnTest = document.getElementById('btn-test-custom-video');
+      if (btnTest) {
+        btnTest.onclick = function() {
+          var val = customInput ? customInput.value.trim() : '';
+          var ytId = global.EjerciciosDB ? global.EjerciciosDB.extractYouTubeId(val) : val;
+          if (!ytId) {
+            alert('Por favor ingresa una URL o ID de YouTube válido para probar.');
+            return;
+          }
+          self.showVideoModal({ nombre: ex.name, youtubeId: ytId });
+        };
+      }
+
+      // Botón confirmar asignación
+      var btnConfirm = document.getElementById('btn-confirm-assign-video');
+      if (btnConfirm) {
+        btnConfirm.onclick = function() {
+          var chosenYt = customInput ? customInput.value.trim() : '';
+          var cleanYt = global.EjerciciosDB ? global.EjerciciosDB.extractYouTubeId(chosenYt) : chosenYt;
+
+          var sel = document.getElementById('assign-select-database-ex');
+          var selId = sel ? sel.value : null;
+          var selectedEx = selId ? global.EjerciciosDB.getById(selId) : null;
+
+          if (!cleanYt && selectedEx && selectedEx.youtubeId) {
+            cleanYt = selectedEx.youtubeId;
+          }
+
+          if (selectedEx) {
+            ex.matchedId = selectedEx.id;
+            ex.matchedName = selectedEx.nombre;
+            ex.group = selectedEx.grupo;
+            if (!ex.notes) ex.notes = selectedEx.descripcion;
+          }
+
+          ex.youtubeId = cleanYt || '';
+          ex.isApproximate = false;
+
+          // Recordar asignación si checkbox marcado
+          var chkRemember = document.getElementById('assign-remember-future');
+          if (chkRemember && chkRemember.checked && cleanYt && global.AppState) {
+            global.AppState.setExerciseVideo(ex.name, cleanYt);
+          }
+
+          modal.classList.remove('open');
+          self.showToast('¡Vídeo asignado correctamente a ' + ex.name + '!');
+          self.showPDFPreviewModal(self.parsedImportResult);
+        };
+      }
+
+      var btnClose = document.getElementById('btn-close-assign-video');
+      var btnCancel = document.getElementById('btn-cancel-assign-video');
+      var closeAssign = function() { modal.classList.remove('open'); };
+      if (btnClose) btnClose.onclick = closeAssign;
+      if (btnCancel) btnCancel.onclick = closeAssign;
+
+      modal.classList.add('open');
+    },
+
+    // Modal para explorar la videoteca y catálogo de 140+ ejercicios
+    openExerciseLibraryModal: function() {
+      var self = this;
+      var modal = document.getElementById('modal-exercise-library');
+      if (!modal) return;
+
+      var currentGroup = 'Todos';
+      var currentQuery = '';
+
+      var groupChipsContainer = document.getElementById('library-group-chips');
+      var groups = ['Todos', 'Pecho', 'Espalda', 'Pierna', 'Hombro', 'Bíceps', 'Tríceps', 'Abdomen'];
+
+      if (groupChipsContainer) {
+        var gHtml = '';
+        groups.forEach(function(g) {
+          gHtml += '<button type="button" class="library-filter-chip ' + (g === currentGroup ? 'active' : '') + '" data-group="' + g + '">' + g + '</button>';
+        });
+        groupChipsContainer.innerHTML = gHtml;
+
+        groupChipsContainer.querySelectorAll('.library-filter-chip').forEach(function(chip) {
+          chip.onclick = function() {
+            groupChipsContainer.querySelectorAll('.library-filter-chip').forEach(function(c) { c.classList.remove('active'); });
+            this.classList.add('active');
+            currentGroup = this.getAttribute('data-group');
+            renderCards();
+          };
+        });
+      }
+
+      var searchIn = document.getElementById('library-search-input');
+      if (searchIn) {
+        searchIn.value = '';
+        searchIn.oninput = function() {
+          currentQuery = this.value;
+          renderCards();
+        };
+      }
+
+      function renderCards() {
+        var grid = document.getElementById('library-exercises-grid');
+        var counterLabel = document.getElementById('library-counter-label');
+        if (!grid || !global.EjerciciosDB) return;
+
+        var list = global.EjerciciosDB.search(currentQuery, currentGroup, 'todos');
+        if (counterLabel) {
+          counterLabel.textContent = list.length + ' ejercicio(s) encontrados' + (currentGroup !== 'Todos' ? ' en ' + currentGroup : '');
+        }
+
+        if (list.length === 0) {
+          grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--text-dim);">' +
+            '<p>No se encontraron ejercicios con ese criterio de búsqueda.</p>' +
+          '</div>';
+          return;
+        }
+
+        var html = '';
+        list.forEach(function(ex) {
+          var userOverride = (global.AppState && global.AppState.exerciseVideos) ? global.AppState.exerciseVideos[ex.nombre] : null;
+          var videoId = userOverride || ex.youtubeId;
+
+          html += '<div class="library-ex-card">' +
+            '<div class="library-ex-header">' +
+              '<h5 class="library-ex-title">' + ex.nombre + '</h5>' +
+              '<span class="badge-role">' + ex.grupo + '</span>' +
+            '</div>' +
+            (ex.descripcion ? '<p class="library-ex-desc">' + ex.descripcion + '</p>' : '') +
+            '<div class="library-ex-footer">' +
+              '<div class="library-ex-badges">' +
+                '<span class="badge-equipment">⚙️ ' + (ex.equipo || 'Máquina') + '</span>' +
+                (userOverride ? '<span class="pill-video-matched" title="Vídeo personalizado por ti">⭐ Personalizado</span>' : '') +
+              '</div>' +
+              (videoId ? '<button type="button" class="btn-video-chip btn-library-watch" data-id="' + ex.id + '" data-yt="' + videoId + '">🎬 Ver Vídeo</button>' : '<span class="pill-video-missing">Sin vídeo</span>') +
+            '</div>' +
+          '</div>';
+        });
+
+        grid.innerHTML = html;
+
+        grid.querySelectorAll('.btn-library-watch').forEach(function(btn) {
+          btn.onclick = function() {
+            var exId = this.getAttribute('data-id');
+            var ex = global.EjerciciosDB.getById(exId);
+            var yt = this.getAttribute('data-yt');
+            if (ex) {
+              self.showVideoModal(Object.assign({}, ex, { youtubeId: yt }));
+            }
+          };
+        });
+      }
+
+      renderCards();
+
+      var btnClose = document.getElementById('btn-close-exercise-library');
+      if (btnClose) btnClose.onclick = function() { modal.classList.remove('open'); };
 
       modal.classList.add('open');
     },
@@ -989,6 +1271,11 @@
     },
 
     generateActiveExerciseCardHTML: function(ex, exIdx) {
+      var videoId = ex.youtubeId;
+      if (!videoId && global.EjerciciosDB) {
+        videoId = global.EjerciciosDB.getVideoForExercise(ex);
+      }
+
       var html = '<div class="active-exercise-card" data-exercise-index="' + exIdx + '">' +
         '<div class="active-exercise-header">' +
           '<div class="exercise-info">' +
@@ -997,7 +1284,7 @@
           '</div>' +
           '<div class="exercise-header-actions">' +
             '<button type="button" class="btn-warmup-chip" data-exercise-index="' + exIdx + '" title="Calcular series de calentamiento">🔥 Calentar</button>' +
-            (ex.youtubeId ? '<button class="btn-video-chip" data-exercise-id="' + ex.exerciseId + '" data-youtube="' + ex.youtubeId + '" title="Ver vídeo técnica">🎬 Vídeo</button>' : '') +
+            (videoId ? '<button class="btn-video-chip" data-exercise-id="' + ex.exerciseId + '" data-youtube="' + videoId + '" title="Ver vídeo técnica">🎬 Vídeo</button>' : '') +
             '<button class="btn-icon-subtle btn-remove-exercise" data-exercise-index="' + exIdx + '" title="Quitar ejercicio">✕</button>' +
           '</div>' +
         '</div>';
@@ -1926,26 +2213,43 @@
 
     showVideoModal: function(exercise) {
       var modal = document.getElementById('modal-video-player');
-      if (!modal) return;
+      if (!modal || !exercise) return;
+
+      var baseInfo = null;
+      if (global.EjerciciosDB) {
+        if (exercise.exerciseId) baseInfo = global.EjerciciosDB.getById(exercise.exerciseId);
+        if (!baseInfo && (exercise.nombre || exercise.name)) {
+          var match = global.EjerciciosDB.findBestMatch(exercise.nombre || exercise.name);
+          if (match && match.exercise) baseInfo = match.exercise;
+        }
+      }
 
       var titleEl = document.getElementById('video-modal-title');
       var groupEl = document.getElementById('video-modal-group');
       var frameWrap = document.getElementById('video-frame-container');
       var tipsWrap = document.getElementById('video-tips-container');
 
-      if (titleEl) titleEl.textContent = exercise.nombre || exercise.name;
-      if (groupEl) groupEl.textContent = exercise.grupo || 'Técnica de Ejecución';
+      var displayName = exercise.nombre || exercise.name || (baseInfo ? baseInfo.nombre : 'Ejercicio');
+      var displayGroup = exercise.grupo || exercise.group || (baseInfo ? baseInfo.grupo : 'Técnica de Ejecución');
+
+      if (titleEl) titleEl.textContent = displayName;
+      if (groupEl) groupEl.textContent = displayGroup;
+
+      var videoId = exercise.youtubeId ? (global.EjerciciosDB ? global.EjerciciosDB.extractYouTubeId(exercise.youtubeId) : exercise.youtubeId) : '';
+      if (!videoId && global.EjerciciosDB) {
+        videoId = global.EjerciciosDB.getVideoForExercise(exercise) || (baseInfo ? baseInfo.youtubeId : '');
+      }
 
       if (frameWrap) {
-        if (exercise.youtubeId) {
-          frameWrap.innerHTML = '<iframe class="responsive-video-iframe" src="https://www.youtube-nocookie.com/embed/' + exercise.youtubeId + '?autoplay=1&rel=0" title="Vídeo técnica" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+        if (videoId) {
+          frameWrap.innerHTML = '<iframe class="responsive-video-iframe" src="https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0" title="Vídeo técnica" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
         } else {
           frameWrap.innerHTML = '<div class="no-video-placeholder"><p>No hay vídeo asignado para este ejercicio.</p></div>';
         }
       }
 
       if (tipsWrap) {
-        var tips = exercise.tips || [exercise.descripcion || 'Mantén la fase excéntrica estricta en 5 segundos.'];
+        var tips = exercise.tips || (baseInfo && baseInfo.tips ? baseInfo.tips : [exercise.descripcion || (baseInfo ? baseInfo.descripcion : 'Mantén la fase excéntrica estricta en 5 segundos a RIR 0.')]);
         var tHtml = '<ul class="coach-tips-list">';
         tips.forEach(function(tip) { tHtml += '<li>🎯 ' + tip + '</li>'; });
         tHtml += '</ul>';
@@ -1983,16 +2287,26 @@
       if (exListEl) {
         var html = '';
         (r.ejercicios || []).forEach(function(ex, idx) {
-          var base = global.EjerciciosDB.getById(ex.exerciseId);
+          var base = global.EjerciciosDB ? (global.EjerciciosDB.getById(ex.exerciseId) || global.EjerciciosDB.getById(ex.matchedId)) : null;
+          if (!base && global.EjerciciosDB && (ex.name || ex.nombre)) {
+            var mRes = global.EjerciciosDB.findBestMatch(ex.name || ex.nombre);
+            if (mRes && mRes.exercise) base = mRes.exercise;
+          }
           var setsCount = ex.defaultSets ? ex.defaultSets.length : 3;
+          var videoId = ex.youtubeId || (base ? base.youtubeId : '');
+          if (!videoId && global.EjerciciosDB) {
+            videoId = global.EjerciciosDB.getVideoForExercise(ex);
+          }
+          var exDisplayName = ex.name || (base ? base.nombre : 'Ejercicio');
+
           html += '<div class="preview-ex-item">' +
             '<div class="preview-ex-num">' + (idx + 1) + '</div>' +
             '<div class="preview-ex-details">' +
-              '<h5>' + (ex.name || (base ? base.nombre : 'Ejercicio')) + '</h5>' +
+              '<h5>' + exDisplayName + '</h5>' +
               '<span class="preview-ex-meta">' + setsCount + ' series · ' + (ex.targetReps || '8-10 reps') + '</span>' +
               (ex.notes ? '<p class="preview-ex-notes">💡 ' + ex.notes + '</p>' : '') +
             '</div>' +
-            (base && base.youtubeId ? '<button class="btn-video-chip btn-preview-video" data-id="' + base.id + '">🎬 Vídeo</button>' : '') +
+            (videoId ? '<button type="button" class="btn-video-chip btn-preview-video" data-yt="' + videoId + '" data-name="' + exDisplayName + '">🎬 Vídeo</button>' : '') +
           '</div>';
         });
         exListEl.innerHTML = html;
@@ -2000,9 +2314,14 @@
         var self = this;
         exListEl.querySelectorAll('.btn-preview-video').forEach(function(b) {
           b.addEventListener('click', function() {
-            var exId = this.getAttribute('data-id');
-            var ex = global.EjerciciosDB.getById(exId);
-            if (ex) self.showVideoModal(ex);
+            var yt = this.getAttribute('data-yt');
+            var name = this.getAttribute('data-name');
+            var baseEx = global.EjerciciosDB ? global.EjerciciosDB.findBestMatch(name) : null;
+            self.showVideoModal({
+              nombre: name,
+              youtubeId: yt,
+              tips: (baseEx && baseEx.exercise && baseEx.exercise.tips) ? baseEx.exercise.tips : null
+            });
           });
         });
       }
