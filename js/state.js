@@ -17,7 +17,8 @@
     CHAT_TEAM: 'jperez_chat_team_v4',
     SETTINGS: 'jperez_app_settings_v4',
     PRS: 'jperez_personal_records_v4',
-    ONBOARDING: 'jperez_onboarding_completed_v4'
+    ONBOARDING: 'jperez_onboarding_completed_v4',
+    MEASUREMENTS: 'jperez_body_measurements_v4'
   };
 
   var DEFAULT_SETTINGS = {
@@ -42,6 +43,7 @@
     settings: Object.assign({}, DEFAULT_SETTINGS),
     prs: {},
     hasCompletedOnboarding: false,
+    bodyMeasurements: [],
 
     init: function() {
       this.loadSettings();
@@ -52,6 +54,7 @@
       this.loadCustomExercises();
       this.loadChats();
       this.loadPRs();
+      this.loadBodyMeasurements();
 
       try {
         this.hasCompletedOnboarding = localStorage.getItem(STORAGE_KEYS.ONBOARDING) === 'true';
@@ -448,6 +451,53 @@
       ];
     },
 
+    // -------------------------------------------------------------------------
+    // SEGUIMIENTO CORPORAL Y MEDIDAS (BODY TRACKER)
+    // -------------------------------------------------------------------------
+    loadBodyMeasurements: function() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
+        this.bodyMeasurements = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        this.bodyMeasurements = [];
+      }
+    },
+
+    saveBodyMeasurements: function() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.MEASUREMENTS, JSON.stringify(this.bodyMeasurements));
+        document.dispatchEvent(new CustomEvent('jperez:measurements-updated', { detail: this.bodyMeasurements }));
+      } catch (e) {}
+    },
+
+    addBodyMeasurement: function(data) {
+      if (!data) return null;
+      var newEntry = {
+        id: 'meas_' + Date.now(),
+        date: data.date || new Date().toISOString().split('T')[0],
+        weight: parseFloat(data.weight) || (this.currentUser ? this.currentUser.weight : 75),
+        waist: data.waist ? parseFloat(data.waist) : null,
+        chest: data.chest ? parseFloat(data.chest) : null,
+        arms: data.arms ? parseFloat(data.arms) : null,
+        thighs: data.thighs ? parseFloat(data.thighs) : null,
+        notes: data.notes || ''
+      };
+      this.bodyMeasurements.unshift(newEntry);
+
+      if (newEntry.weight && this.currentUser) {
+        this.currentUser.weight = newEntry.weight;
+        this.saveCurrentUser();
+      }
+      this.saveBodyMeasurements();
+      return newEntry;
+    },
+
+    deleteBodyMeasurement: function(id) {
+      this.bodyMeasurements = this.bodyMeasurements.filter(function(m) { return m.id !== id; });
+      this.saveBodyMeasurements();
+      return true;
+    },
+
     exportAllData: function() {
       var backup = {
         exportedAt: new Date().toISOString(),
@@ -461,7 +511,8 @@
         prs: this.prs,
         settings: this.settings,
         chatCoach: this.chatCoach,
-        chatTeam: this.chatTeam
+        chatTeam: this.chatTeam,
+        bodyMeasurements: this.bodyMeasurements
       };
       return JSON.stringify(backup, null, 2);
     },
@@ -477,6 +528,7 @@
         if (data.settings) this.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings);
         if (data.chatCoach) this.chatCoach = data.chatCoach;
         if (data.chatTeam) this.chatTeam = data.chatTeam;
+        if (data.bodyMeasurements) this.bodyMeasurements = data.bodyMeasurements;
 
         this.saveCurrentUser();
         this.saveWorkoutHistory();
@@ -484,6 +536,7 @@
         this.saveCustomExercises();
         this.saveSettings();
         this.saveChats();
+        this.saveBodyMeasurements();
         this.calculatePRs();
 
         document.dispatchEvent(new CustomEvent('jperez:data-imported'));

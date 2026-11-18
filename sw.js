@@ -1,23 +1,27 @@
 // =============================================================================
-// JPEREZCOACH APP · SERVICE WORKER (OFFLINE PWA CACHE V3)
+// JPEREZCOACH APP · SERVICE WORKER (OFFLINE PWA CACHE V4.1)
 // =============================================================================
 
-const CACHE_NAME = 'jperezcoach-v3.0.0';
+const CACHE_NAME = 'jperezcoach-v4.1.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './manifest.webmanifest',
+  './favicon.ico',
   './favicon-32.png',
   './apple-touch-icon.png',
   './icon-192.png',
   './icon-512.png',
+  './icon-512-maskable.png',
   './icon.svg',
   './coach.png',
   './banner.jpg',
+  './og-image.jpg',
   './lib/pdf.min.js',
   './lib/pdf.worker.min.js',
   './js/state.js',
+  './js/onboarding.js',
   './js/db-ejercicios.js',
   './js/rutinas-oficiales.js',
   './js/pdf-importer.js',

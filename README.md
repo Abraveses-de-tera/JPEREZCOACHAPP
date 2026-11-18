@@ -107,26 +107,32 @@ DÍA 2: PUSH (Pecho y Hombro)
 
 - **🏋️‍♂️ Entrenar (Live Workout Tracker)**:
   - Registro serie a serie con valores anteriores (*Ghost values*).
+  - **⚡ Steppers Rápidos de Carga (+1kg, +2.5kg, +5kg, +1rep)**: Ajuste instantáneo de cargas sin desplegar el teclado táctil.
+  - **🔥 Calculadora de Calentamiento (Ramp-Up Sets)**: Calcula las series de aproximación progresiva (Barra, 50%, 70%, 85%) y las inserta con 1 toque.
+  - **🎯 Consejos de Sobrecarga Progresiva**: Recomendaciones inteligentes en cada ejercicio basadas en tu última sesión para alcanzar RIR 0.
   - Selector de series: Normal, Calentamiento (W), Drop Set (D), Fallo / RIR 0 (F).
-  - Temporizador de descanso flotante automático con sonido y vibración.
+  - Temporizador de descanso flotante con cuenta atrás sonora (beeps 3-2-1-0 vía Web Audio API) y vibración háptica.
   - Barra flotante minimizable que sigue activa mientras navegas por la app.
   - Celebración con confeti al finalizar y resumen con nuevos récords personales (PRs).
 - **📋 Rutinas Dinámicas**:
   - Creación manual, duplicación, edición de series/reps y borrado de cualquier rutina.
   - Subida de archivos PDF o pegado de texto con previsualización interactiva.
-  - Exportación individual a PDF imprimible, JSON o WhatsApp.
+  - Exportación individual a PDF imprimible, JSON o WhatsApp con vista previa de tarjeta oficial.
 - **💬 Chat Doble Canal**:
   - Canal con Jose Perez (Coach IA con su metodología) + enlace directo a WhatsApp (`+34 658 50 71 36`).
   - Feed de comunidad JPEREZ TEAM con tarjetas de entreno y reacciones con emojis.
-- **📊 Historial & Analítica**:
+- **📊 Historial & Analítica Avanzada**:
+  - **📈 Gráficos Vectoriales SVG de Evolución 1RM**: Curva histórica de fuerza máxima estimada por ejercicio con marcas pico y tendencias.
+  - **🎯 Distribución Muscular y Volumen Semanal**: Balance de series efectivas a RIR 0 por grupo muscular (Espalda, Pecho, Pierna, Hombro, Bíceps, Tríceps, Core) vs volumen óptimo (10-18 series).
   - Matriz Heatmap de consistencia de 12 semanas.
-  - Calculadora de Discos de Barra Olímpica (*Plate Calculator*).
+  - Calculadora de Discos de Barra Olímpica (*Plate Calculator*) con gráfico visual de barra.
   - Calculadora de 1RM con tabla de porcentajes de entrenamiento.
-  - Salón de la Fama de PRs.
-- **👤 Perfil y Sesión**:
-  - Gestión multiperfil de atletas en local.
-  - Registro de atletas con peso, estatura, objetivo y racha activa.
+  - Salón de la Fama de Récords Personales (PRs).
+- **👤 Perfil, Medidas & Sesión**:
+  - **📏 Seguimiento Corporal & Peso (Body Tracker)**: Historial de pesajes y medidas (cintura, brazo, pecho, muslo) con cálculo automático de variaciones (+/- kg).
+  - Gestión multiperfil de atletas en local sin servidores externos.
   - Asistente de personalización (Onboarding) reabrible en cualquier momento.
+  - Botón directo para compartir la app en WhatsApp con vista previa enriquecida y foto oficial de Jose Perez.
 
 ---
 

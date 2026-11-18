@@ -76,6 +76,30 @@
       } catch (e) {}
     },
 
+    playCountdownBeep: function(secondsLeft) {
+      if (!global.AppState || !global.AppState.settings.soundEnabled) return;
+      try {
+        var ctx = getAudioContext();
+        if (!ctx) return;
+        var now = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+
+        osc.type = 'sine';
+        // 880 Hz para 3, 2, 1
+        osc.frequency.setValueAtTime(880, now);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } catch (e) {}
+    },
+
     playPRFanfare: function() {
       if (!global.AppState || !global.AppState.settings.soundEnabled) return;
       try {
@@ -410,6 +434,14 @@
       this.restInterval = setInterval(function() {
         self.restRemainingSeconds--;
 
+        // Beep de cuenta atrás en los últimos 3 segundos (3, 2, 1)
+        if (self.restRemainingSeconds >= 1 && self.restRemainingSeconds <= 3) {
+          SoundEffects.playCountdownBeep(self.restRemainingSeconds);
+          if (navigator.vibrate && global.AppState && global.AppState.settings.vibrateEnabled) {
+            navigator.vibrate(50);
+          }
+        }
+
         document.dispatchEvent(new CustomEvent('jperez:rest-tick', {
           detail: {
             remaining: self.restRemainingSeconds,
@@ -465,6 +497,65 @@
       }
 
       document.dispatchEvent(new CustomEvent('jperez:rest-finished', { detail: { skipped: false } }));
+    },
+
+    // -------------------------------------------------------------------------
+    // AJUSTES RÁPIDOS Y STEPPERS DE PESO / REPS
+    // -------------------------------------------------------------------------
+    adjustSetWeight: function(exerciseIndex, setIndex, delta) {
+      var active = this.getActiveWorkout();
+      if (!active || !active.exercises[exerciseIndex]) return;
+      var s = active.exercises[exerciseIndex].sets[setIndex];
+      if (!s) return;
+      var current = parseFloat(s.weight) || 0;
+      s.weight = Math.max(0, Math.round((current + delta) * 10) / 10);
+      global.AppState.saveActiveWorkout();
+      document.dispatchEvent(new CustomEvent('jperez:workout-updated'));
+    },
+
+    adjustSetReps: function(exerciseIndex, setIndex, delta) {
+      var active = this.getActiveWorkout();
+      if (!active || !active.exercises[exerciseIndex]) return;
+      var s = active.exercises[exerciseIndex].sets[setIndex];
+      if (!s) return;
+      var current = parseInt(s.reps, 10) || 0;
+      s.reps = Math.max(0, current + delta);
+      global.AppState.saveActiveWorkout();
+      document.dispatchEvent(new CustomEvent('jperez:workout-updated'));
+    },
+
+    insertWarmUpSets: function(exerciseIndex, workingWeightKg, barWeightKg) {
+      var active = this.getActiveWorkout();
+      if (!active || !active.exercises[exerciseIndex]) return;
+      var ex = active.exercises[exerciseIndex];
+
+      var warmupList = global.Analytics ? global.Analytics.calculateWarmUpSets(workingWeightKg, barWeightKg) : [];
+      if (!warmupList || warmupList.length === 0) return;
+
+      var toInsert = warmupList.filter(function(w) { return w.type === 'warmup'; });
+
+      var newSets = [];
+      toInsert.forEach(function(item, idx) {
+        newSets.push({
+          setNumber: idx + 1,
+          type: 'warmup',
+          weight: item.weight,
+          reps: item.reps,
+          completed: false,
+          previous: item.label
+        });
+      });
+
+      var num = 1;
+      newSets.forEach(function(s) { s.setNumber = num++; });
+      ex.sets.forEach(function(s) {
+        s.setNumber = num++;
+        newSets.push(s);
+      });
+
+      ex.sets = newSets;
+      global.AppState.saveActiveWorkout();
+      document.dispatchEvent(new CustomEvent('jperez:workout-updated'));
     },
 
     // -------------------------------------------------------------------------

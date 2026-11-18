@@ -996,10 +996,17 @@
             '<span class="exercise-group-pill">' + (ex.group || 'General') + '</span>' +
           '</div>' +
           '<div class="exercise-header-actions">' +
+            '<button type="button" class="btn-warmup-chip" data-exercise-index="' + exIdx + '" title="Calcular series de calentamiento">🔥 Calentar</button>' +
             (ex.youtubeId ? '<button class="btn-video-chip" data-exercise-id="' + ex.exerciseId + '" data-youtube="' + ex.youtubeId + '" title="Ver vídeo técnica">🎬 Vídeo</button>' : '') +
             '<button class="btn-icon-subtle btn-remove-exercise" data-exercise-index="' + exIdx + '" title="Quitar ejercicio">✕</button>' +
           '</div>' +
         '</div>';
+
+      // Consejo de Sobrecarga Progresiva del Coach
+      var overloadAdvice = global.Analytics ? global.Analytics.getProgressiveOverloadAdvice(ex.exerciseId) : null;
+      if (overloadAdvice && overloadAdvice.hasHistory) {
+        html += '<div class="exercise-coach-advice"><span>🎯</span> <span>' + overloadAdvice.message + '</span></div>';
+      }
 
       if (ex.notes) {
         html += '<div class="exercise-coach-note">💡 ' + ex.notes + '</div>';
@@ -1045,6 +1052,22 @@
             '</button>' +
           '</td>' +
         '</tr>';
+
+        // Stepper rápido para ajustar peso/reps sin teclear en móvil
+        if (!s.completed) {
+          html += '<tr class="stepper-row" data-set-index="' + sIdx + '"><td colspan="5">' +
+            '<div class="quick-steppers-drawer">' +
+              '<span style="font-size: 0.68rem; color: var(--text-dim); margin-right: 2px;">Rápido:</span>' +
+              '<button type="button" class="stepper-btn stepper-minus" data-action="weight" data-delta="-2.5" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">-2.5kg</button>' +
+              '<button type="button" class="stepper-btn stepper-minus" data-action="weight" data-delta="-1" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">-1kg</button>' +
+              '<button type="button" class="stepper-btn stepper-plus" data-action="weight" data-delta="1" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">+1kg</button>' +
+              '<button type="button" class="stepper-btn stepper-plus" data-action="weight" data-delta="2.5" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">+2.5kg</button>' +
+              '<button type="button" class="stepper-btn stepper-plus" data-action="weight" data-delta="5" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">+5kg</button>' +
+              '<button type="button" class="stepper-btn stepper-minus" data-action="reps" data-delta="-1" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">-1rep</button>' +
+              '<button type="button" class="stepper-btn stepper-plus" data-action="reps" data-delta="1" data-exercise-index="' + exIdx + '" data-set-index="' + sIdx + '">+1rep</button>' +
+            '</div>' +
+          '</td></tr>';
+        }
       });
 
       html += '</tbody></table></div>';
@@ -1113,6 +1136,31 @@
           var yt = this.getAttribute('data-youtube');
           var ex = global.EjerciciosDB.getById(exId);
           self.showVideoModal(ex || { nombre: 'Ejercicio', youtubeId: yt });
+        });
+      });
+
+      // Botón para calcular series de calentamiento
+      container.querySelectorAll('.btn-warmup-chip').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
+          self.openWarmupModal(exIdx);
+        });
+      });
+
+      // Steppers rápidos (+1, +2.5, +5, reps)
+      container.querySelectorAll('.stepper-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var exIdx = parseInt(this.getAttribute('data-exercise-index'), 10);
+          var sIdx = parseInt(this.getAttribute('data-set-index'), 10);
+          var action = this.getAttribute('data-action');
+          var delta = parseFloat(this.getAttribute('data-delta')) || 0;
+
+          if (action === 'weight') {
+            global.WorkoutEngine.adjustSetWeight(exIdx, sIdx, delta);
+          } else if (action === 'reps') {
+            global.WorkoutEngine.adjustSetReps(exIdx, sIdx, delta);
+          }
         });
       });
 
@@ -1526,6 +1574,9 @@
           });
         }
       }
+
+      this.renderMuscleDistribution();
+      this.renderProgressionChart();
     },
 
     renderProfileTab: function() {
@@ -1555,6 +1606,8 @@
           avatarWrap.innerHTML = '<div class="profile-big-avatar placeholder">' + (user.name || 'A').charAt(0).toUpperCase() + '</div>';
         }
       }
+
+      this.renderBodyTracker();
     },
 
     calculateAndRenderPlates: function(targetKg, barKg) {
@@ -1609,6 +1662,266 @@
       });
       tHtml += '</tbody></table>';
       tableWrap.innerHTML = tHtml;
+    },
+
+    // =========================================================================
+    // DISTRIBUCIÓN MUSCULAR Y VOLUMEN SEMANAL (MUSCLE HEATMAP BREAKDOWN)
+    // =========================================================================
+    renderMuscleDistribution: function() {
+      var container = document.getElementById('muscle-distribution-bars-container');
+      if (!container || !global.Analytics) return;
+      var data = global.Analytics.getMuscleVolumeDistribution(14);
+
+      var html = '';
+      data.forEach(function(item) {
+        html += '<div class="muscle-bar-item">' +
+          '<div class="muscle-bar-header">' +
+            '<span class="muscle-name">' + item.muscle + '</span>' +
+            '<div style="display: flex; align-items: center; gap: 8px;">' +
+              '<span class="muscle-stats-text"><strong>' + item.effectiveSets + '</strong> / ' + item.targetSets + ' series</span>' +
+              '<span class="muscle-status-badge" style="background: ' + item.color + '22; color: ' + item.color + ';">' + item.status + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="muscle-bar-track">' +
+            '<div class="muscle-bar-fill" style="width: ' + item.percentage + '%; background-color: ' + item.color + ';"></div>' +
+          '</div>' +
+        '</div>';
+      });
+
+      container.innerHTML = html;
+    },
+
+    // =========================================================================
+    // EVOLUCIÓN Y GRÁFICOS DE PROGRESIÓN 1RM
+    // =========================================================================
+    renderProgressionChart: function(targetExId) {
+      var selectEl = document.getElementById('chart-exercise-select');
+      var bannerEl = document.getElementById('chart-exercise-stats-banner');
+      var svgWrap = document.getElementById('chart-progression-svg-container');
+      if (!selectEl || !svgWrap || !global.Analytics) return;
+
+      var history = (global.AppState && global.AppState.workoutHistory) ? global.AppState.workoutHistory : [];
+      var exerciseMap = {};
+
+      // Extraer ejercicios presentes en el historial
+      history.forEach(function(w) {
+        if (!w.exercises) return;
+        w.exercises.forEach(function(e) {
+          var id = e.exerciseId || e.id;
+          if (id && !exerciseMap[id]) {
+            exerciseMap[id] = e.name;
+          }
+        });
+      });
+
+      // Si aún no hay registros, añadir ejercicios populares del sistema
+      if (Object.keys(exerciseMap).length === 0 && global.EjerciciosDB) {
+        var defaultList = global.EjerciciosDB.getAll().slice(0, 8);
+        defaultList.forEach(function(def) { exerciseMap[def.id] = def.nombre; });
+      }
+
+      var exIds = Object.keys(exerciseMap);
+      if (exIds.length === 0) {
+        svgWrap.innerHTML = '<div class="empty-chart-box"><p>Completa entrenamientos para ver tu evolución de 1RM.</p></div>';
+        return;
+      }
+
+      var currentExId = targetExId || selectEl.value || exIds[0];
+
+      var selectHtml = '';
+      exIds.forEach(function(id) {
+        var isSelected = (id === currentExId);
+        selectHtml += '<option value="' + id + '" ' + (isSelected ? 'selected' : '') + '>' + exerciseMap[id] + '</option>';
+      });
+      selectEl.innerHTML = selectHtml;
+
+      var self = this;
+      selectEl.onchange = function() {
+        self.renderProgressionChart(this.value);
+      };
+
+      // Estadísticas del ejercicio
+      var exHistory = global.Analytics.getExerciseHistory(currentExId);
+      if (bannerEl) {
+        if (exHistory.length > 0) {
+          var best1RM = 0;
+          var bestWeight = 0;
+          var bestReps = 0;
+          var totalSets = 0;
+          exHistory.forEach(function(pt) {
+            if (pt.estimated1RM > best1RM) best1RM = pt.estimated1RM;
+            if (pt.bestWeight > bestWeight) { bestWeight = pt.bestWeight; bestReps = pt.bestReps; }
+            totalSets += pt.completedSets;
+          });
+
+          bannerEl.innerHTML = '<div class="mini-stat-card"><span class="mini-stat-val">' + best1RM + ' kg</span><span class="mini-stat-lbl">1RM Récord</span></div>' +
+            '<div class="mini-stat-card"><span class="mini-stat-val">' + bestWeight + ' kg × ' + bestReps + '</span><span class="mini-stat-lbl">Mejor Marca</span></div>' +
+            '<div class="mini-stat-card"><span class="mini-stat-val">' + exHistory.length + ' / ' + totalSets + '</span><span class="mini-stat-lbl">Sesiones / Series</span></div>';
+        } else {
+          bannerEl.innerHTML = '<div class="mini-stat-card" style="grid-column: span 3;"><span class="mini-stat-val" style="font-size: 0.95rem;">Sin registros históricos aún para este ejercicio</span></div>';
+        }
+      }
+
+      // Renderizar gráfico vectorial SVG
+      svgWrap.innerHTML = global.Analytics.generateProgressionSvgChart(currentExId, 500, 220);
+    },
+
+    // =========================================================================
+    // SEGUIMIENTO CORPORAL Y MEDIDAS (BODY TRACKER)
+    // =========================================================================
+    renderBodyTracker: function() {
+      var chipsWrap = document.getElementById('body-tracker-summary-chips');
+      var tableWrap = document.getElementById('body-measurements-history-table-wrap');
+      if (!chipsWrap || !tableWrap || !global.AppState) return;
+
+      var list = global.AppState.bodyMeasurements || [];
+      var user = global.AppState.currentUser;
+      var currentW = (list.length > 0) ? list[0].weight : (user ? user.weight : 75);
+      var initialW = (list.length > 0) ? list[list.length - 1].weight : currentW;
+      var diffW = Math.round((currentW - initialW) * 10) / 10;
+      var diffStr = diffW > 0 ? ('+' + diffW + ' kg') : (diffW + ' kg');
+      var deltaClass = diffW >= 0 ? 'weight-delta-positive' : 'weight-delta-negative';
+
+      chipsWrap.innerHTML = '<div class="profile-chip"><span class="chip-label">Peso Actual</span><strong>' + currentW + ' kg</strong></div>' +
+        '<div class="profile-chip"><span class="chip-label">Peso Inicial</span><strong>' + initialW + ' kg</strong></div>' +
+        '<div class="profile-chip"><span class="chip-label">Variación</span><strong class="' + deltaClass + '">' + diffStr + '</strong></div>' +
+        '<div class="profile-chip"><span class="chip-label">Registros</span><strong>' + list.length + '</strong></div>';
+
+      if (list.length === 0) {
+        tableWrap.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.82rem;">No tienes registros de medidas corporales. Pulsa el botón de arriba para registrar tu pesaje.</div>';
+        return;
+      }
+
+      var html = '<table class="body-measurements-table">' +
+        '<thead><tr>' +
+          '<th>Fecha</th>' +
+          '<th>Peso</th>' +
+          '<th>Cintura</th>' +
+          '<th>Brazo</th>' +
+          '<th>Pecho</th>' +
+          '<th>Notas</th>' +
+          '<th></th>' +
+        '</tr></thead><tbody>';
+
+      list.forEach(function(m) {
+        html += '<tr>' +
+          '<td><strong>' + m.date + '</strong></td>' +
+          '<td><span style="color: var(--accent-cyan); font-weight: 700;">' + m.weight + ' kg</span></td>' +
+          '<td>' + (m.waist ? m.waist + ' cm' : '-') + '</td>' +
+          '<td>' + (m.arms ? m.arms + ' cm' : '-') + '</td>' +
+          '<td>' + (m.chest ? m.chest + ' cm' : '-') + '</td>' +
+          '<td><span style="font-size: 0.75rem; color: var(--text-muted);">' + (m.notes || '-') + '</span></td>' +
+          '<td style="text-align: right;"><button type="button" class="btn-icon-subtle btn-delete-measure" data-id="' + m.id + '" title="Eliminar registro">✕</button></td>' +
+        '</tr>';
+      });
+
+      html += '</tbody></table>';
+      tableWrap.innerHTML = html;
+
+      var self = this;
+      tableWrap.querySelectorAll('.btn-delete-measure').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (confirm('¿Eliminar este registro de peso?')) {
+            global.AppState.deleteBodyMeasurement(id);
+            self.renderBodyTracker();
+            self.showToast('Registro eliminado');
+          }
+        });
+      });
+    },
+
+    openBodyModal: function() {
+      var modal = document.getElementById('modal-body-measurement');
+      var dateInput = document.getElementById('measure-date');
+      var weightInput = document.getElementById('measure-weight');
+      if (!modal) return;
+
+      if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+      if (weightInput) {
+        var user = global.AppState ? global.AppState.currentUser : null;
+        weightInput.value = user ? user.weight : 75;
+      }
+
+      modal.classList.add('open');
+    },
+
+    // =========================================================================
+    // MODAL CALCULADORA DE CALENTAMIENTO (WARM-UP CALCULATOR)
+    // =========================================================================
+    openWarmupModal: function(exerciseIndex) {
+      this.currentWarmupExIdx = exerciseIndex;
+      var active = global.WorkoutEngine ? global.WorkoutEngine.getActiveWorkout() : null;
+      if (!active || !active.exercises[exerciseIndex]) return;
+
+      var ex = active.exercises[exerciseIndex];
+      var modal = document.getElementById('modal-warmup-calculator');
+      var titleEl = document.getElementById('warmup-modal-title');
+      var weightInput = document.getElementById('warmup-working-weight');
+      var barSelect = document.getElementById('warmup-bar-weight');
+
+      if (!modal) return;
+      if (titleEl) titleEl.textContent = '🔥 Calentamiento: ' + ex.name;
+
+      var defaultW = 100;
+      if (ex.sets) {
+        var firstValid = ex.sets.find(function(s) { return parseFloat(s.weight) > 0; });
+        if (firstValid) defaultW = parseFloat(firstValid.weight);
+      }
+      if (weightInput) weightInput.value = defaultW;
+
+      var self = this;
+      var renderBreakdown = function() {
+        var w = parseFloat(weightInput.value) || 0;
+        var b = parseFloat(barSelect.value) || 20;
+        var sets = global.Analytics ? global.Analytics.calculateWarmUpSets(w, b) : [];
+        var container = document.getElementById('warmup-sets-breakdown-container');
+        if (!container) return;
+
+        var html = '';
+        sets.forEach(function(s) {
+          var isEff = (s.type === 'efectiva');
+          var badgeClass = isEff ? 'badge-eff' : 'badge-w';
+          var badgeText = isEff ? 'EFECTIVA' : ('CALENTAMIENTO ' + s.order);
+
+          html += '<div class="warmup-set-card ' + (isEff ? 'warmup-efectiva' : '') + '">' +
+            '<div class="warmup-left">' +
+              '<span class="warmup-order-badge ' + badgeClass + '">' + badgeText + '</span>' +
+              '<span class="warmup-title">' + s.label + '</span>' +
+              '<span class="warmup-notes">💡 ' + s.notes + ' · Descanso: ' + s.restSec + 's</span>' +
+            '</div>' +
+            '<div class="warmup-right">' +
+              '<div class="warmup-weight">' + s.weight + ' kg</div>' +
+              '<div class="warmup-reps">' + s.reps + ' reps (' + s.percentage + '%)</div>' +
+            '</div>' +
+          '</div>';
+        });
+        container.innerHTML = html;
+      };
+
+      if (weightInput) weightInput.oninput = renderBreakdown;
+      if (barSelect) barSelect.onchange = renderBreakdown;
+
+      renderBreakdown();
+
+      var btnApply = document.getElementById('btn-apply-warmup-to-exercise');
+      if (btnApply) {
+        btnApply.onclick = function() {
+          var w = parseFloat(weightInput.value) || 0;
+          var b = parseFloat(barSelect.value) || 20;
+          global.WorkoutEngine.insertWarmUpSets(exerciseIndex, w, b);
+          modal.classList.remove('open');
+          self.showToast('¡Series de aproximación añadidas a ' + ex.name + '!');
+        };
+      }
+
+      var btnClose = document.getElementById('btn-close-warmup-modal');
+      var btnCancel = document.getElementById('btn-cancel-warmup');
+      var closeModal = function() { modal.classList.remove('open'); };
+      if (btnClose) btnClose.onclick = closeModal;
+      if (btnCancel) btnCancel.onclick = closeModal;
+
+      modal.classList.add('open');
     },
 
     showVideoModal: function(exercise) {
@@ -1908,6 +2221,24 @@
     var btnRestSkip = document.getElementById('btn-rest-skip');
     if (btnRestSkip) btnRestSkip.onclick = function() { WorkoutEngine.skipRestTimer(); };
 
+    var btnRestSound = document.getElementById('btn-rest-sound-toggle');
+    if (btnRestSound) {
+      var updateSoundBtn = function() {
+        var enabled = global.AppState && global.AppState.settings.soundEnabled;
+        btnRestSound.textContent = enabled ? '🔊' : '🔇';
+        btnRestSound.title = enabled ? 'Sonido activado' : 'Sonido silenciado';
+      };
+      updateSoundBtn();
+      btnRestSound.onclick = function() {
+        if (global.AppState) {
+          global.AppState.settings.soundEnabled = !global.AppState.settings.soundEnabled;
+          global.AppState.saveSettings();
+          updateSoundBtn();
+          App.showToast(global.AppState.settings.soundEnabled ? '🔊 Sonido activado' : '🔇 Sonido silenciado');
+        }
+      };
+    }
+
     // Chat
     var chatChannelBtns = document.querySelectorAll('.chat-channel-btn');
     chatChannelBtns.forEach(function(b) {
@@ -2081,6 +2412,54 @@
         var url = 'https://wa.me/?text=' + encodeURIComponent(text);
         window.open(url, '_blank');
       });
+    }
+
+    // Modal de Medidas Corporales (Body Tracker)
+    var btnOpenBody = document.getElementById('btn-open-body-modal');
+    var modalBody = document.getElementById('modal-body-measurement');
+    var btnCloseBody = document.getElementById('btn-close-body-modal');
+    var btnCancelBody = document.getElementById('btn-cancel-body-modal');
+    var formBody = document.getElementById('form-body-measurement');
+
+    function closeBodyModal() { if (modalBody) modalBody.classList.remove('open'); }
+    if (btnOpenBody) {
+      btnOpenBody.onclick = function() { App.openBodyModal(); };
+    }
+    if (btnCloseBody) btnCloseBody.onclick = closeBodyModal;
+    if (btnCancelBody) btnCancelBody.onclick = closeBodyModal;
+
+    if (formBody) {
+      formBody.onsubmit = function(e) {
+        e.preventDefault();
+        var dateVal = document.getElementById('measure-date').value;
+        var weightVal = document.getElementById('measure-weight').value;
+        var waistVal = document.getElementById('measure-waist').value;
+        var armsVal = document.getElementById('measure-arms').value;
+        var chestVal = document.getElementById('measure-chest').value;
+        var thighsVal = document.getElementById('measure-thighs').value;
+        var notesVal = document.getElementById('measure-notes').value;
+
+        if (!weightVal) {
+          alert('Por favor introduce al menos tu peso corporal.');
+          return;
+        }
+
+        global.AppState.addBodyMeasurement({
+          date: dateVal,
+          weight: weightVal,
+          waist: waistVal,
+          arms: armsVal,
+          chest: chestVal,
+          thighs: thighsVal,
+          notes: notesVal
+        });
+
+        closeBodyModal();
+        App.renderBodyTracker();
+        App.renderHeader();
+        App.renderProfileTab();
+        App.showToast('¡Medición guardada correctamente!');
+      };
     }
   });
 })(window);

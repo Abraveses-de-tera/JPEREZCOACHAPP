@@ -233,6 +233,43 @@
           </div>
         </div>
 
+        <!-- DISTRIBUCIÓN MUSCULAR Y VOLUMEN SEMANAL -->
+        <div class="heatmap-section-card muscle-distribution-card">
+          <div class="card-section-header">
+            <div>
+              <h4>🎯 Distribución Muscular y Volumen Semanal</h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Series efectivas a RIR 0 acumuladas en los últimos 14 días vs volumen óptimo recomendado (10-18 series).</p>
+            </div>
+          </div>
+          <div id="muscle-distribution-bars-container" class="muscle-distribution-grid">
+            <!-- Renderizado dinámicamente -->
+          </div>
+        </div>
+
+        <!-- GRÁFICO DE PROGRESIÓN Y EVOLUCIÓN 1RM -->
+        <div class="heatmap-section-card progression-chart-card">
+          <div class="card-section-header" style="flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <h4>📈 Evolución y Progresión de Fuerza (1RM)</h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Curva histórica de 1RM estimado por ejercicio a lo largo de tus sesiones.</p>
+            </div>
+            <div class="chart-exercise-picker-wrap">
+              <select id="chart-exercise-select" class="form-control" style="min-width: 220px; font-size: 0.85rem; padding: 6px 10px;">
+                <!-- Opciones renderizadas dinámicamente -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Mini banner de estadísticas del ejercicio seleccionado -->
+          <div id="chart-exercise-stats-banner" class="chart-stats-mini-banner">
+            <!-- Renderizado dinámicamente -->
+          </div>
+
+          <div id="chart-progression-svg-container" class="progression-svg-wrap">
+            <!-- SVG dinámico -->
+          </div>
+        </div>
+
         <!-- Récords Personales (PR Hall of Fame) -->
         <div class="prs-section-card">
           <div class="card-section-header">
@@ -300,6 +337,31 @@
             <button class="btn btn-outline-sm" id="btn-edit-profile-modal">
               ✏️ Editar Perfil
             </button>
+          </div>
+        </div>
+
+        <!-- HERRAMIENTA: SEGUIMIENTO CORPORAL Y PESO (BODY TRACKER) -->
+        <div class="gym-tool-card" id="tool-body-tracker">
+          <div class="tool-card-header">
+            <div class="tool-icon">📏</div>
+            <div>
+              <h4>Seguimiento Corporal & Peso</h4>
+              <p>Controla la evolución de tu peso corporal y perímetros musculares a lo largo del tiempo.</p>
+            </div>
+          </div>
+
+          <div id="body-tracker-summary-chips" class="body-summary-chips-row">
+            <!-- Chips de peso actual, delta (+/- kg) renderizados dinámicamente -->
+          </div>
+
+          <div class="body-tracker-actions-row" style="margin-top: 0.85rem; margin-bottom: 0.85rem;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-open-body-modal">
+              ➕ Registrar Peso / Medidas de Hoy
+            </button>
+          </div>
+
+          <div id="body-measurements-history-table-wrap" class="body-table-wrap">
+            <!-- Tabla de historial de mediciones renderizada dinámicamente -->
           </div>
         </div>
 
@@ -743,6 +805,7 @@ DÍA 2: PUSH (Pecho y Hombro)
       <div class="rest-timer-controls">
         <button class="btn-rest-adjust" id="btn-rest-minus-15">-15s</button>
         <button class="btn-rest-adjust" id="btn-rest-plus-30">+30s</button>
+        <button class="btn-rest-adjust btn-rest-sound" id="btn-rest-sound-toggle" title="Sonido activado">🔊</button>
         <button class="btn-rest-skip" id="btn-rest-skip">Saltar</button>
       </div>
     </div>
@@ -1033,6 +1096,112 @@ DÍA 2: PUSH (Pecho y Hombro)
         <button type="button" class="btn btn-secondary" id="btn-onboarding-prev" style="display: none;">◀ Anterior</button>
         <button type="button" class="btn btn-primary btn-large" id="btn-onboarding-next">Siguiente ➔</button>
       </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: CALCULADORA DE CALENTAMIENTO Y RAMP-UP SETS
+       ========================================================================= -->
+  <div id="modal-warmup-calculator" class="modal-dialog-overlay">
+    <div class="modal-dialog-content warmup-dialog-content">
+      <div class="modal-dialog-header">
+        <div>
+          <h3 id="warmup-modal-title">🔥 Series de Calentamiento</h3>
+          <span class="badge-role">Ramp-Up Neural JPEREZ</span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-warmup-modal">✕</button>
+      </div>
+
+      <div class="warmup-modal-body">
+        <p class="warmup-intro-text">
+          Aproximación progresiva óptima para activar el sistema nervioso central sin generar fatiga metabólica previa a la serie efectiva a RIR 0.
+        </p>
+
+        <div class="tool-inputs-grid">
+          <div class="form-group">
+            <label for="warmup-working-weight">Peso Serie Efectiva (kg):</label>
+            <input type="number" step="0.5" id="warmup-working-weight" class="form-control" value="100" min="20">
+          </div>
+          <div class="form-group">
+            <label for="warmup-bar-weight">Peso Barra / Máquina:</label>
+            <select id="warmup-bar-weight" class="form-control">
+              <option value="20" selected>Barra Olímpica (20 kg)</option>
+              <option value="15">Barra Femenina (15 kg)</option>
+              <option value="10">Barra Técnica (10 kg)</option>
+              <option value="0">Máquina / Multipower (0 kg)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="warmup-sets-breakdown-container" class="warmup-breakdown-list">
+          <!-- Renderizado dinámicamente -->
+        </div>
+      </div>
+
+      <div class="modal-dialog-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-warmup">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="btn-apply-warmup-to-exercise">
+          ⚡ Añadir Series de Calentamiento al Ejercicio
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: REGISTRAR PESO Y MEDIDAS CORPORALES (BODY TRACKER)
+       ========================================================================= -->
+  <div id="modal-body-measurement" class="modal-dialog-overlay">
+    <div class="modal-dialog-content body-measure-dialog">
+      <div class="modal-dialog-header">
+        <div>
+          <h3>📏 Registrar Peso y Medidas Corporales</h3>
+          <span class="badge-role">Seguimiento Físico</span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-body-modal">✕</button>
+      </div>
+
+      <form id="form-body-measurement" class="body-measure-form">
+        <div class="form-group">
+          <label for="measure-date">Fecha del Registro:</label>
+          <input type="date" id="measure-date" class="form-control" required>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="measure-weight">Peso Corporal (kg) *:</label>
+            <input type="number" step="0.1" id="measure-weight" class="form-control" placeholder="Ej: 78.5" required>
+          </div>
+          <div class="form-group">
+            <label for="measure-waist">Cintura (cm):</label>
+            <input type="number" step="0.5" id="measure-waist" class="form-control" placeholder="Ej: 82.0">
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="measure-arms">Brazo (cm):</label>
+            <input type="number" step="0.5" id="measure-arms" class="form-control" placeholder="Ej: 39.5">
+          </div>
+          <div class="form-group">
+            <label for="measure-chest">Pecho (cm):</label>
+            <input type="number" step="0.5" id="measure-chest" class="form-control" placeholder="Ej: 104.0">
+          </div>
+          <div class="form-group">
+            <label for="measure-thighs">Muslo (cm):</label>
+            <input type="number" step="0.5" id="measure-thighs" class="form-control" placeholder="Ej: 60.5">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="measure-notes">Observaciones:</label>
+          <input type="text" id="measure-notes" class="form-control" placeholder="Ej: Ayunas, buena congestión, energía alta">
+        </div>
+
+        <div class="modal-dialog-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-body-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Medición ➔</button>
+        </div>
+      </form>
     </div>
   </div>
 
